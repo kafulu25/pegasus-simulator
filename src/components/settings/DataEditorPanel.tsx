@@ -271,23 +271,23 @@ export const DataEditorPanel: React.FC = () => {
   
   // Handle Add New
   const handleAddNew = () => {
-    const newId = Date.now();
-    switch (selectedCategory) {
-      case 'targets':
-        addTarget({
-          id: newId,
-          name: formData.name || 'New Target',
-          role: formData.role || 'Unknown',
-          avatar: formData.name?.slice(0, 2).toUpperCase() || 'NT',
-          color: '#' + Math.floor(Math.random() * 16777215).toString(16),
-          status: formData.status || 'active',
-          os: formData.os || 'iOS',
-          device: formData.device || 'Unknown Device',
-          country: formData.country || 'Unknown',
-          infectedSince: new Date().toISOString().split('T')[0],
-          agentVersion: 'v4.2.2',
-        });
-        break;
+  const newId = Date.now();
+  switch (selectedCategory) {
+    case 'targets':
+      addTarget({
+        id: newId,
+        name: formData.name || 'New Target',
+        role: formData.role || 'Unknown',
+        avatar: formData.name?.slice(0, 2).toUpperCase() || 'NT',
+        color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+        status: formData.status || 'active',
+        os: formData.os || 'iOS',
+        device: formData.device || 'Unknown Device',
+        country: formData.country || 'Unknown',
+        infectedSince: new Date().toISOString().split('T')[0],
+        agentVersion: 'v4.2.2',
+      });
+      break;
         
       case 'messages':
         addConversation({
