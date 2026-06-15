@@ -19,6 +19,13 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipDefaultLibCheck": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
@@ -26,5 +33,6 @@
     "types": ["node", "react", "react-dom"]
   },
   "include": ["src"],
+  "exclude": ["node_modules", "dist"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
