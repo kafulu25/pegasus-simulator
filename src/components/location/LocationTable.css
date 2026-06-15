@@ -1,0 +1,67 @@
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table td {
+  padding: 12px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(30, 45, 61, 0.5);
+}
+
+.data-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+.target-name-cell {
+  font-weight: 600;
+}
+
+.coordinates {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.updated-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.status-badge-sm {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.status-badge-sm.active {
+  background: rgba(0, 230, 118, 0.15);
+  color: var(--green);
+}
+
+.status-badge-sm.idle {
+  background: rgba(255, 152, 0, 0.15);
+  color: var(--orange);
+}
+
+.status-badge-sm.offline {
+  background: rgba(100, 100, 100, 0.15);
+  color: var(--text-muted);
+}

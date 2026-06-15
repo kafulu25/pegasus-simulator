@@ -1,0 +1,166 @@
+.alerts-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.alerts-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+/* Reduced button size for New Alert */
+.btn-new-alert {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #0d4f8c, var(--accent-dim));
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-new-alert:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+.alert-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.alert-stat.critical {
+  border-left: 3px solid var(--red);
+}
+
+.alert-stat.warning {
+  border-left: 3px solid var(--orange);
+}
+
+.alert-stat.info {
+  border-left: 3px solid var(--accent);
+}
+
+.alert-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.alert-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.alert-card {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+
+.alert-card:hover {
+  border-color: var(--border-bright);
+}
+
+.alert-card.critical {
+  border-left: 3px solid var(--red);
+}
+
+.alert-card.warning {
+  border-left: 3px solid var(--orange);
+}
+
+.alert-card.info {
+  border-left: 3px solid var(--accent);
+}
+
+.alert-icon {
+  font-size: 24px;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.alert-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.alert-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.alert-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.alert-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.alert-btn.acknowledge {
+  background: rgba(0, 200, 255, 0.1);
+  color: var(--accent);
+}
+
+.alert-btn.acknowledge:hover {
+  background: rgba(0, 200, 255, 0.2);
+}
+
+.alert-btn.dismiss {
+  background: rgba(255, 77, 77, 0.1);
+  color: var(--red);
+}
+
+.alert-btn.dismiss:hover {
+  background: rgba(255, 77, 77, 0.2);
+}
+
+.no-alerts {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.no-alerts-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-alerts-sub {
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0.7;
+}

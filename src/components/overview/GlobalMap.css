@@ -1,0 +1,78 @@
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.text-xs {
+  font-size: 11px;
+}
+
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.text-gold { color: var(--gold); }
+
+.map-container {
+  background: radial-gradient(ellipse at center, #0a1a2e 0%, #050d18 70%);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  height: 240px;
+}
+
+.map-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(0, 200, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 200, 255, 0.04) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.map-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+  animation: mapPulse 2s infinite;
+}
+
+.map-dot::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.4;
+  animation: mapRing 2s infinite;
+}
+
+.map-dot.green { background: var(--green); box-shadow: 0 0 10px var(--green); color: var(--green); }
+.map-dot.red { background: var(--red); box-shadow: 0 0 10px var(--red); color: var(--red); }
+.map-dot.gold { background: var(--gold); box-shadow: 0 0 10px var(--gold); color: var(--gold); }
+
+@keyframes mapPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+@keyframes mapRing {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.map-stats {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+}

@@ -1,0 +1,311 @@
+import React from 'react';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+
+// Register a monospace font for terminal style
+Font.register({
+  family: 'Courier',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/courierprime/v12/u-450q2lgwslOqpF_6gQ8kELaw9pWt_-.ttf', fontWeight: 'normal' },
+    { src: 'https://fonts.gstatic.com/s/courierprime/v12/u-4k0q2lgwslOqpF_6gQ8kELaw9pXvP-1w.ttf', fontWeight: 'bold' },
+  ],
+});
+
+// Terminal styles
+const styles = StyleSheet.create({
+  page: {
+    backgroundColor: '#000000',
+    padding: 40,
+    fontFamily: 'Courier',
+  },
+  header: {
+    marginBottom: 30,
+    borderBottom: 1,
+    borderBottomColor: '#00ff00',
+    paddingBottom: 10,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#00ff00',
+    marginBottom: 10,
+    letterSpacing: 2,
+  },
+  subtitle: {
+    fontSize: 10,
+    color: '#00ff00',
+    opacity: 0.7,
+    marginBottom: 5,
+  },
+  section: {
+    marginBottom: 20,
+    border: 1,
+    borderColor: '#00ff00',
+    padding: 12,
+    borderRadius: 4,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#00ff00',
+    marginBottom: 12,
+    borderBottom: 1,
+    borderBottomColor: '#00ff00',
+    paddingBottom: 4,
+    display: 'flex',
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: 6,
+    fontSize: 9,
+  },
+  label: {
+    width: 120,
+    color: '#00ff00',
+    opacity: 0.7,
+  },
+  value: {
+    flex: 1,
+    color: '#00ff00',
+  },
+  dataTable: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    borderBottom: 1,
+    borderBottomColor: '#00ff00',
+    paddingBottom: 4,
+    marginBottom: 8,
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#00ff00',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    marginBottom: 6,
+    fontSize: 8,
+  },
+  col1: { width: 30 },
+  col2: { width: 80 },
+  col3: { width: 100 },
+  col4: { width: 120 },
+  col5: { width: 80 },
+  separator: {
+    borderBottom: 1,
+    borderBottomColor: '#00ff00',
+    marginVertical: 10,
+    opacity: 0.3,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 40,
+    right: 40,
+    fontSize: 8,
+    color: '#00ff00',
+    opacity: 0.5,
+    textAlign: 'center',
+    borderTop: 1,
+    borderTopColor: '#00ff00',
+    paddingTop: 10,
+  },
+  asciiArt: {
+    fontSize: 6,
+    color: '#00ff00',
+    opacity: 0.5,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  warningText: {
+    color: '#ff4444',
+    fontSize: 8,
+    marginTop: 8,
+  },
+  successText: {
+    color: '#00ff00',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  highlightBox: {
+    backgroundColor: '#003300',
+    padding: 8,
+    borderRadius: 4,
+    marginVertical: 8,
+  },
+});
+
+interface ReportData {
+  caseName: string;
+  generatedBy: string;
+  generatedDate: Date;
+  targets: Array<{
+    name: string;
+    role: string;
+    status: string;
+    dataCollected: {
+      messages: number;
+      calls: number;
+      locations: number;
+      photos: number;
+      passwords: number;
+    };
+  }>;
+  summary: {
+    totalMessages: number;
+    totalCalls: number;
+    totalLocations: number;
+    totalPhotos: number;
+    totalPasswords: number;
+    totalDataSize: string;
+  };
+  keyFindings: string[];
+  recommendations: string[];
+}
+
+export const TerminalReportPDF: React.FC<{ data: ReportData }> = ({ data }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      {/* ASCII Art Header */}
+      <View style={styles.asciiArt}>
+        <Text>{`
+  ██████╗ ███████╗ ██████╗  █████╗ ███████╗██╗   ██╗███████╗
+  ██╔══██╗██╔════╝██╔════╝ ██╔══██╗██╔════╝██║   ██║██╔════╝
+  ██████╔╝█████╗  ██║  ███╗███████║███████╗██║   ██║███████╗
+  ██╔═══╝ ██╔══╝  ██║   ██║██╔══██║╚════██║██║   ██║╚════██║
+  ██║     ███████╗╚██████╔╝██║  ██║███████║╚██████╔╝███████║
+  ╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝
+        `}</Text>
+        <Text>NSO GROUP - INTELLIGENCE REPORT</Text>
+      </View>
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>{data.caseName.toUpperCase()}</Text>
+        <Text style={styles.subtitle}>CLASSIFICATION: TOP SECRET // NOFORN</Text>
+        <Text style={styles.subtitle}>Generated: {data.generatedDate.toLocaleString()}</Text>
+        <Text style={styles.subtitle}>Generated By: {data.generatedBy}</Text>
+        <Text style={styles.subtitle}>Report ID: PEG-{Date.now()}-{Math.floor(Math.random() * 9999)}</Text>
+      </View>
+
+      {/* Executive Summary */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>EXECUTIVE SUMMARY</Text>
+        <View style={styles.highlightBox}>
+          <Text style={styles.successText}>✓ Operation Status: ACTIVE</Text>
+          <Text style={styles.successText}>✓ Total Data Volume: {data.summary.totalDataSize}</Text>
+          <Text style={styles.successText}>✓ Active Targets: {data.targets.length}</Text>
+        </View>
+      </View>
+
+      {/* Data Collection Summary */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>DATA COLLECTION SUMMARY</Text>
+        <View style={styles.dataTable}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.col1}>#</Text>
+            <Text style={styles.col2}>METRIC</Text>
+            <Text style={styles.col3}>COUNT</Text>
+            <Text style={styles.col4}>PERCENTAGE</Text>
+            <Text style={styles.col5}>STATUS</Text>
+          </View>
+          {[
+            { metric: 'Messages', count: data.summary.totalMessages, percent: '38%', status: '✓' },
+            { metric: 'Call Logs', count: data.summary.totalCalls, percent: '15%', status: '✓' },
+            { metric: 'Locations', count: data.summary.totalLocations, percent: '22%', status: '✓' },
+            { metric: 'Photos/Media', count: data.summary.totalPhotos, percent: '18%', status: '✓' },
+            { metric: 'Passwords', count: data.summary.totalPasswords, percent: '7%', status: '✓' },
+          ].map((item, idx) => (
+            <View style={styles.tableRow} key={idx}>
+              <Text style={styles.col1}>{idx + 1}</Text>
+              <Text style={styles.col2}>{item.metric}</Text>
+              <Text style={styles.col3}>{item.count.toLocaleString()}</Text>
+              <Text style={styles.col4}>{item.percent}</Text>
+              <Text style={styles.col5}>{item.status}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Target Details */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>TARGET PROFILES</Text>
+        {data.targets.map((target, idx) => (
+          <View key={idx} style={{ marginBottom: 15 }}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Target Name:</Text>
+              <Text style={styles.value}>{target.name}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Role/Profile:</Text>
+              <Text style={styles.value}>{target.role}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Status:</Text>
+              <Text style={styles.value}>{target.status.toUpperCase()}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Data Collected:</Text>
+              <Text style={styles.value}>
+                {target.dataCollected.messages} msgs | {target.dataCollected.calls} calls | 
+                {target.dataCollected.locations} locs | {target.dataCollected.passwords} creds
+              </Text>
+            </View>
+            {idx < data.targets.length - 1 && <View style={styles.separator} />}
+          </View>
+        ))}
+      </View>
+
+      {/* Key Findings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>KEY FINDINGS</Text>
+        {data.keyFindings.map((finding, idx) => (
+          <View key={idx} style={styles.row}>
+            <Text style={styles.label}>{`[>]`}</Text>
+            <Text style={styles.value}>{finding}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Recommendations */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>RECOMMENDATIONS</Text>
+        {data.recommendations.map((rec, idx) => (
+          <View key={idx} style={styles.row}>
+            <Text style={styles.label}>{`[!]`}</Text>
+            <Text style={styles.value}>{rec}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Technical Metadata */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>TECHNICAL METADATA</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>Encryption:</Text>
+          <Text style={styles.value}>AES-256</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Protocol:</Text>
+          <Text style={styles.value}>PEGASUS v4.2.2</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>C2 Server:</Text>
+          <Text style={styles.value}>c2-pri.peg-ops.net:443</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Last Sync:</Text>
+          <Text style={styles.value}>{new Date().toLocaleString()}</Text>
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text>CLASSIFICATION: TOP SECRET // NOFORN</Text>
+        <Text>This report is generated automatically by Pegasus Intelligence Platform</Text>
+        <Text>Authorized personnel only. Destroy after review.</Text>
+        <Text style={{ marginTop: 5 }}>PAGE 1/1</Text>
+      </View>
+    </Page>
+  </Document>
+);

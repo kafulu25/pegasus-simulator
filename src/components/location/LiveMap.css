@@ -1,0 +1,86 @@
+.map-container {
+  background: radial-gradient(ellipse at center, #0a1a2e 0%, #03070f 100%);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  height: 240px;
+  margin-bottom: 12px;
+}
+
+.map-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(0, 200, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 200, 255, 0.06) 1px, transparent 1px);
+  background-size: 25px 25px;
+}
+
+.map-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 16px var(--accent);
+  animation: mapPulse 2s infinite;
+  transform: translate(-50%, -50%);
+}
+
+.map-dot::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0.4;
+  animation: mapRing 2s infinite;
+}
+
+.map-coordinates {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.map-address {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.map-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border);
+}
+
+.stat-item {
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.stat-value-sm {
+  font-weight: 600;
+}
+
+.stat-value-sm.accent { color: var(--accent); }
+.stat-value-sm.green { color: var(--green); }

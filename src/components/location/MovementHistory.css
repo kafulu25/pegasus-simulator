@@ -1,0 +1,68 @@
+.movement-history {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.history-point {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+.history-marker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.marker-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-card);
+  z-index: 1;
+}
+
+.history-point:last-child .marker-dot {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+.marker-line {
+  position: absolute;
+  top: 14px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--border-bright);
+}
+
+.history-point:last-child .marker-line {
+  display: none;
+}
+
+.history-details {
+  flex: 1;
+  padding-bottom: 16px;
+}
+
+.history-address {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.history-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.history-coords {
+  font-size: 10px;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+}

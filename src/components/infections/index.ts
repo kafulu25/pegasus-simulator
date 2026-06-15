@@ -1,0 +1,1 @@
+export { InfectionsPanel } from './InfectionsPanel';
