@@ -137,14 +137,19 @@ export const DataEditorPanel: React.FC = () => {
         }
         break;
         
-      case 'calls':
-        const callIndex = calls.findIndex(c => c.id === formData.id);
-        if (callIndex !== -1) {
-          const updatedCalls = [...calls];
-          updatedCalls[callIndex] = formData;
-          useCallStore.setState({ calls: updatedCalls });
-        }
-        break;
+	      case 'calls':
+  addCall({
+    id: newId,
+    targetId: 1,
+    targetName: formData.targetName || 'Ahmad Karimi',
+    direction: formData.direction || 'incoming',
+    number: formData.number || '+1234567890',
+    duration: formData.duration || 60,
+    date: new Date(),
+    hasRecording: true,
+    app: formData.app || 'Cellular',
+  });
+  break;
         
       case 'contacts':
         const contactIndex = contacts.findIndex(c => c.id === formData.id);
