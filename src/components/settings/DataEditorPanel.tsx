@@ -360,18 +360,18 @@ export const DataEditorPanel: React.FC = () => {
         break;
         
       case 'calls':
-        addCall({
-          id: newId,
-          targetId: 1,
-          targetName: formData.targetName || 'Ahmad Karimi',
-          direction: formData.direction || 'incoming',
-          number: formData.number || '+1234567890',
-          duration: formData.duration || 60,
-          timestamp: new Date(),
-          hasRecording: true,
-          app: formData.app || 'Cellular',
-        });
-        break;
+  addCall({
+    id: newId,
+    targetId: 1,
+    targetName: formData.targetName || 'Ahmad Karimi',
+    direction: formData.direction || 'incoming',
+    number: formData.number || '+1234567890',
+    duration: formData.duration || 60,
+    date: new Date(),  // <- Use 'date' instead of 'timestamp'
+    hasRecording: true,
+    app: formData.app || 'Cellular',
+  });
+  break;	
         
       case 'browser':
         addHistory({
