@@ -49,7 +49,7 @@ export interface Message {
   attachments?: string[];
 }
 
-export interface CallLog {
+ export interface CallLog {
   id: number;
   targetId: number;
   targetName: string;
