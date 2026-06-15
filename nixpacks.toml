@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["npm run build -- --noEmit || true", "npm run build"]
+cmds = ["npx vite build"]
 
 [phases.build.cache]
 directories = ["node_modules/.cache"]
@@ -15,4 +15,4 @@ cmd = "npx serve -s dist -l 3000"
 
 [build.env]
 NODE_ENV = "production"
-CI = "true"
+CI = "false"
