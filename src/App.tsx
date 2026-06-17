@@ -1,123 +1,50 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useAuthStore } from './stores/authStore';
+import { useTargetStore } from './stores/targetStore';
+import { useFeedStore } from './stores/feedStore';
+import { useViewStore } from './stores/viewStore';
+import { mockTargets } from './utils/mockData';
+import { LoginPage } from './components/auth/LoginPage';
 import { TopBar } from './components/layout/TopBar';
 import { Sidebar } from './components/layout/Sidebar';
-import { LoginPage } from './components/auth/LoginPage';
-import { useAuthStore } from './stores/authStore';
-import { useViewStore } from './stores/viewStore';
-import { useFeedStore } from './stores/feedStore';
-import { useTargetStore } from './stores/targetStore';
-import { mockTargets } from './utils/mockData';
+import { MainContent } from './components/layout/MainContent';
 import './App.css';
 
-// Import all panels
-import { OverviewPanel } from './components/overview/OverviewPanel';
-import { TargetsPanel } from './components/targets/TargetsPanel';
-import { LiveFeedPanel } from './components/livefeed/LiveFeedPanel';
-import { LocationPanel } from './components/location/LocationPanel';
-import { MessagesPanel } from './components/messages/MessagesPanel';
-import { CallsPanel } from './components/calls/CallsPanel';
-import { MediaPanel } from './components/media/MediaPanel';
-import { KeyloggerPanel } from './components/keylogger/KeyloggerPanel';
-import { BrowserPanel } from './components/browser/BrowserPanel';
-import { ContactsPanel } from './components/contacts/ContactsPanel';
-import { EmailPanel } from './components/email/EmailPanel';
-import { PasswordsPanel } from './components/passwords/PasswordsPanel';
-import { MicrophonePanel } from './components/microphone/MicrophonePanel';
-import { CameraPanel } from './components/camera/CameraPanel';
-import { ScreenPanel } from './components/screen/ScreenPanel';
-import { InfectionsPanel } from './components/infections/InfectionsPanel';
-import { AlertsPanel } from './components/alerts/AlertsPanel';
-import { SettingsPanel } from './components/settings/SettingsPanel';
-import { CasesPanel } from './components/cases/CasesPanel';
-import { ReportsPanel } from './components/reports/ReportsPanel';
-import { AdminPanel } from './components/admin/AdminPanel';
-import { OsintPanel } from './components/osint/OsintPanel';
-import { ExpertMode } from './components/expert/ExpertMode';
-
-const panelMap: Record<string, React.ComponentType> = {
-  overview: OverviewPanel,
-  targets: TargetsPanel,
-  livefeed: LiveFeedPanel,
-  location: LocationPanel,
-  messages: MessagesPanel,
-  calls: CallsPanel,
-  media: MediaPanel,
-  keylogger: KeyloggerPanel,
-  browser: BrowserPanel,
-  contacts: ContactsPanel,
-  email: EmailPanel,
-  passwords: PasswordsPanel,
-  microphone: MicrophonePanel,
-  camera: CameraPanel,
-  screen: ScreenPanel,
-  infections: InfectionsPanel,
-  alerts: AlertsPanel,
-  settings: SettingsPanel,
-  cases: CasesPanel,
-  reports: ReportsPanel,
-  admin: AdminPanel,
-  osint: OsintPanel,
-  expert: ExpertMode,
-};
-
 function App() {
-  // ALL hooks must be called at the top level, unconditionally, in the same order every render
-  const { isAuthenticated, login } = useAuthStore();
-  const { setTargets } = useTargetStore();
-  const { startLiveStream } = useFeedStore();
-  const { setView, currentView } = useViewStore();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const setTargets = useTargetStore((state) => state.setTargets);
+  const startLiveStream = useFeedStore((state) => state.startLiveStream);
+  const setView = useViewStore((state) => state.setView);
 
   useEffect(() => {
-    // Initialize data
-    setTargets(mockTargets);
-    setIsInitialized(true);
-    
-    // Check if already authenticated from localStorage
-    const storedAuth = localStorage.getItem('pegasus-auth');
-    if (storedAuth) {
-      try {
-        const parsed = JSON.parse(storedAuth);
-        if (parsed.state?.isAuthenticated) {
-          login(parsed.state.user);
-          setView('overview');
-          startLiveStream();
-        }
-      } catch (e) {
-        console.error('Failed to parse auth:', e);
+    if (isAuthenticated) {
+      // 🛠️ FIX: Only load mock targets if the store is empty (first launch).
+      // This prevents overwriting user-modified data on subsequent logins.
+      const currentTargets = useTargetStore.getState().targets;
+      if (currentTargets.length === 0) {
+        setTargets(mockTargets);
+      }
+
+      // Start the live feed simulation (if not already running)
+      startLiveStream();
+
+      // Set default view only if no view is currently selected
+      if (!useViewStore.getState().currentView) {
+        setView('overview');
       }
     }
-  }, []); // Empty dependency array - runs once on mount
+  }, [isAuthenticated, setTargets, startLiveStream, setView]);
 
-  const handleLogin = (username: string, password: string) => {
-    if (username === 'admin' && password === 'pegasus2024') {
-      login(username);
-      setView('overview');
-      startLiveStream();
-    }
-  };
-
-  // Show loading screen while initializing
-  if (!isInitialized) {
-    return <div className="loading-screen">Loading...</div>;
-  }
-
-  // Show login page if not authenticated
   if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
+    return <LoginPage />;
   }
-
-  // Show main app if authenticated
-  const ActivePanel = panelMap[currentView] || OverviewPanel;
 
   return (
-    <div className="app">
+    <div className="app-container">
       <TopBar />
-      <div className="main-layout">
+      <div className="app-body">
         <Sidebar />
-        <div className="content">
-          <ActivePanel />
-        </div>
+        <MainContent />
       </div>
     </div>
   );
