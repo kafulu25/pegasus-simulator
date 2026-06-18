@@ -12,28 +12,35 @@ import './App.css';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const targets = useTargetStore((state) => state.targets);
+  const hasHydrated = useTargetStore((state) => state._hasHydrated);
   const setTargets = useTargetStore((state) => state.setTargets);
   const startLiveStream = useFeedStore((state) => state.startLiveStream);
   const setView = useViewStore((state) => state.setView);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      // 🛠️ FIX: Only load mock targets if the store is empty (first launch).
-      // This prevents overwriting user-modified data on subsequent logins.
-      const currentTargets = useTargetStore.getState().targets;
-      if (currentTargets.length === 0) {
-        setTargets(mockTargets);
-      }
+    // ⚠️ CRITICAL: Only run this effect if:
+    // 1. User is logged in
+    // 2. Zustand has finished rehydrating from localStorage
+    if (!isAuthenticated || !hasHydrated) return;
 
-      // Start the live feed simulation (if not already running)
-      startLiveStream();
-
-      // Set default view only if no view is currently selected
-      if (!useViewStore.getState().currentView) {
-        setView('overview');
-      }
+    // ✅ Only load mock data if the store is completely empty.
+    // This preserves user-modified data across logins.
+    if (targets.length === 0) {
+      console.log('First launch: Loading default mock targets');
+      setTargets(mockTargets);
+    } else {
+      console.log('Existing data found. Keeping user-modified data.');
     }
-  }, [isAuthenticated, setTargets, startLiveStream, setView]);
+
+    // Start live feed (if not already started)
+    startLiveStream();
+
+    // Set default view if none selected
+    if (!useViewStore.getState().currentView) {
+      setView('overview');
+    }
+  }, [isAuthenticated, hasHydrated, targets.length, setTargets, startLiveStream, setView]);
 
   if (!isAuthenticated) {
     return <LoginPage />;
