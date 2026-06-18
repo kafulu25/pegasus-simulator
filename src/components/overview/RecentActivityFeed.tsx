@@ -15,7 +15,7 @@ export const RecentActivityFeed: React.FC = () => {
     // Get real target names from the targets store
     const targetNames = targets.length > 0 
       ? targets.map(t => t.name)
-      : ['Ahmad Karimi', 'Leila Nazari', 'Marcus Webb', 'Sara Petrov'];
+      : ['Target001', 'Target002', 'Target003', 'Target004'];
     
     const randomTarget = targetNames[Math.floor(Math.random() * targetNames.length)];
     // Find the target ID for the selected target name
