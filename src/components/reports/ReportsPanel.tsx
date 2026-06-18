@@ -62,7 +62,7 @@ export const ReportsPanel: React.FC = () => {
   
   // Editable data state
   const [editableData, setEditableData] = useState<EditableReportData>({
-    targetName: 'Ahmad Karimi',
+    targetName: 'Target001',
     targetPhone: '+256703675421',
     targetCoordinates: {
       lat: 35.6892,
