@@ -19,13 +19,8 @@ function App() {
   const setView = useViewStore((state) => state.setView);
 
   useEffect(() => {
-    // ⚠️ CRITICAL: Only run this effect if:
-    // 1. User is logged in
-    // 2. Zustand has finished rehydrating from localStorage
     if (!isAuthenticated || !hasHydrated) return;
 
-    // ✅ Only load mock data if the store is completely empty.
-    // This preserves user-modified data across logins.
     if (targets.length === 0) {
       console.log('First launch: Loading default mock targets');
       setTargets(mockTargets);
@@ -33,10 +28,8 @@ function App() {
       console.log('Existing data found. Keeping user-modified data.');
     }
 
-    // Start live feed (if not already started)
     startLiveStream();
 
-    // Set default view if none selected
     if (!useViewStore.getState().currentView) {
       setView('overview');
     }
