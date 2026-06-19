@@ -16,19 +16,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setError('');
     setIsLoading(true);
 
-    console.log('Login attempt with:', username);
-
     // Simulate authentication delay
     setTimeout(() => {
       if (username === 'admin' && password === 'pegasus2024') {
-        console.log('Login successful, calling onLogin');
         onLogin(username, password);
-        // Auth store will handle setting isAuthenticated
-        setIsLoading(false);
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('user', username);
       } else {
         setError('Invalid username or password');
-        setIsLoading(false);
       }
+      setIsLoading(false);
     }, 1000);
   };
 
