@@ -1,1 +1,1 @@
-export { PhoneScanPanel } from './PhoneScanPanel';
+export { ContactsPanel } from './ContactsPanel';
