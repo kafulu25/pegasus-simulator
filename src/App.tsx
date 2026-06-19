@@ -7,7 +7,7 @@ import { mockTargets } from './utils/mockData';
 import { LoginPage } from './components/auth/LoginPage';
 import { TopBar } from './components/layout/TopBar';
 import { Sidebar } from './components/layout/Sidebar';
-import { OverviewPanel } from './components/overview'; // only overview, no other panels
+import { OverviewPanel } from './components/overview';
 import './App.css';
 
 function App() {
@@ -20,13 +20,15 @@ function App() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // Load targets from localStorage
       useTargetStore.getState().loadFromStorage?.();
       const currentTargets = useTargetStore.getState().targets;
       if (currentTargets.length === 0) {
         setTargets(mockTargets);
       }
       startLiveStream();
-      // Force set view to 'overview' if not set
+      
+      // Ensure a view is set (for sidebar highlighting)
       if (!currentView || currentView === '') {
         setView('overview');
       }
@@ -37,7 +39,7 @@ function App() {
     return <LoginPage onLogin={(username, password) => login(username)} />;
   }
 
-  // For now, we only render OverviewPanel – later we'll add other panels
+  // Render the OverviewPanel directly – this bypasses any view mapping issues
   return (
     <div className="app-container">
       <TopBar />
