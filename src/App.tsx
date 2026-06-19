@@ -8,7 +8,7 @@ import { LoginPage } from './components/auth/LoginPage';
 import { TopBar } from './components/layout/TopBar';
 import { Sidebar } from './components/layout/Sidebar';
 import { OverviewPanel } from './components/overview';
-import { ErrorBoundary } from './ErrorBoundary'; // make sure this exists
+import { ErrorBoundary } from './ErrorBoundary';
 import './App.css';
 
 function App() {
@@ -19,8 +19,11 @@ function App() {
   const setView = useViewStore((state) => state.setView);
   const currentView = useViewStore((state) => state.currentView);
 
+  console.log('App rendering, isAuthenticated:', isAuthenticated);
+
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('User authenticated, loading data...');
       useTargetStore.getState().loadFromStorage?.();
       const currentTargets = useTargetStore.getState().targets;
       if (currentTargets.length === 0) {
