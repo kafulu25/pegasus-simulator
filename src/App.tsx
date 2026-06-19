@@ -32,7 +32,7 @@ import { CasesPanel } from './components/cases/CasesPanel';
 import { ReportsPanel } from './components/reports/ReportsPanel';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { OsintPanel } from './components/osint/OsintPanel';
-// ExpertMode is a named export – corrected import
+// ✅ Correct named import for ExpertMode
 import { ExpertMode } from './components/expert/ExpertMode';
 // PhoneScan – if you have it, uncomment and add to panelMap
 // import PhoneScanPanel from './components/phoneScan/PhoneScan';
@@ -61,7 +61,7 @@ const panelMap: Record<string, React.ComponentType> = {
   admin: AdminPanel,
   osint: OsintPanel,
   expert: ExpertMode,
-  // phoneScan: PhoneScanPanel, // uncomment if needed
+  // phoneScan: PhoneScanPanel,
 };
 
 function App() {
@@ -71,7 +71,6 @@ function App() {
   const { setView, currentView } = useViewStore();
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Check localStorage manually to rehydrate if Zustand fails
   useEffect(() => {
     const stored = localStorage.getItem('pegasus-auth');
     if (stored) {
@@ -86,7 +85,6 @@ function App() {
         console.error('Auth parse error:', e);
       }
     }
-    // Always initialize data
     setTargets(mockTargets);
     setIsInitialized(true);
   }, []);
@@ -97,7 +95,6 @@ function App() {
       setView('overview');
       startLiveStream();
     }
-    // If invalid, LoginPage will show error
   };
 
   if (!isInitialized) {
