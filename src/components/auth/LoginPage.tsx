@@ -18,6 +18,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     // Simulate authentication delay
     setTimeout(() => {
+      // Demo credentials - in production, this should be server-side
       if (username === 'admin' && password === 'pegasus2024') {
         onLogin(username, password);
         localStorage.setItem('isAuthenticated', 'true');
