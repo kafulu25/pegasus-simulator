@@ -1,12 +1,11 @@
-import { Packet, CallLog, Message, ScanResult } from '@/stores/phoneScanStore';
-import type { CallLog as ExistingCallLog, Message as ExistingMessage } from '@/types';
+import { Packet, CallLog, Message, ScanResult } from '../stores/phoneScanStore';
+import type { CallLog as ExistingCallLog, Message as ExistingMessage } from '../types';
 
-// Ugandan number pool
 const UG_NUMBERS = ['0755123456', '0776123456', '0788123456', '0701123456', '0759988776', '0788112233'];
 const APPS = ['WhatsApp', 'Telegram', 'Signal', 'Facebook', 'Instagram', 'Snapchat', 'TikTok'];
 const PACKET_TYPES = ['sms', 'call', 'gps', 'app', 'contact', 'keystroke'] as const;
 
-const randomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const randomBase64 = (len: number = 32) => {
