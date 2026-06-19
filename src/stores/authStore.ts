@@ -15,17 +15,12 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       user: null,
       login: (username) => {
-        console.log('🔐 Login successful:', username);
         set({ isAuthenticated: true, user: username });
-        // Also update localStorage directly to be safe
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('user', username);
+        localStorage.setItem('pegasus-auth', JSON.stringify({ state: { isAuthenticated: true, user: username } }));
       },
       logout: () => {
-        console.log('🚪 Logout triggered');
         set({ isAuthenticated: false, user: null });
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('user');
+        localStorage.removeItem('pegasus-auth');
       },
     }),
     {
