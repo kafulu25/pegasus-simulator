@@ -1,9 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './index.css';
 
-// Create error boundary inline to catch any rendering issues
 try {
   const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
   root.render(
