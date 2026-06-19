@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg-primary); /* match app background */
 }
 
 .panel-header {
@@ -11,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-secondary);
+  background: var(--bg-primary); /* same as overview-panel */
   flex-shrink: 0;
 }
 
@@ -38,7 +39,11 @@
   flex: 1;
   overflow-y: auto;
   padding: 20px 24px;
+  background: var(--bg-primary); /* same as header */
 }
+
+/* ===== Scrollbar inside scroll-content uses global rules ===== */
+/* but we can add local override if needed */
 
 .grid-2 {
   display: grid;
