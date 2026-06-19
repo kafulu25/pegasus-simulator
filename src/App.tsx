@@ -1,35 +1,52 @@
 import React, { useEffect } from 'react';
 import { useAuthStore } from './stores/authStore';
+import { useTargetStore } from './stores/targetStore';
+import { useFeedStore } from './stores/feedStore';
+import { useViewStore } from './stores/viewStore';
+import { mockTargets } from './utils/mockData';
 import { LoginPage } from './components/auth/LoginPage';
+import { TopBar } from './components/layout/TopBar';
+import { Sidebar } from './components/layout/Sidebar';
+import { OverviewPanel } from './components/overview';
+import { ErrorBoundary } from './ErrorBoundary'; // make sure this exists
 import './App.css';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const login = useAuthStore((state) => state.login);
+  const setTargets = useTargetStore((state) => state.setTargets);
+  const startLiveStream = useFeedStore((state) => state.startLiveStream);
+  const setView = useViewStore((state) => state.setView);
+  const currentView = useViewStore((state) => state.currentView);
 
-  console.log('App rendering, isAuthenticated:', isAuthenticated);
+  useEffect(() => {
+    if (isAuthenticated) {
+      useTargetStore.getState().loadFromStorage?.();
+      const currentTargets = useTargetStore.getState().targets;
+      if (currentTargets.length === 0) {
+        setTargets(mockTargets);
+      }
+      startLiveStream();
+      if (!currentView || currentView === '') {
+        setView('overview');
+      }
+    }
+  }, [isAuthenticated, setTargets, startLiveStream, setView, currentView]);
 
-  // If not authenticated, show login page
   if (!isAuthenticated) {
     return <LoginPage onLogin={(username, password) => login(username)} />;
   }
 
-  // If authenticated, show a simple message
   return (
-    <div style={{
-      color: '#0f0',
-      fontSize: '30px',
-      padding: '40px',
-      backgroundColor: '#000',
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column'
-    }}>
-      <div>✅ You are logged in!</div>
-      <div style={{ fontSize: '18px', marginTop: '20px' }}>
-        The app is rendering. Now we can add components back one by one.
+    <div className="app-container">
+      <TopBar />
+      <div className="app-body">
+        <Sidebar />
+        <div className="main-content">
+          <ErrorBoundary>
+            <OverviewPanel />
+          </ErrorBoundary>
+        </div>
       </div>
     </div>
   );
