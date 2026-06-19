@@ -40,6 +40,7 @@ import { ExpertMode } from './components/expert/ExpertMode';
 
 const panelMap: Record<string, React.ComponentType> = {
   overview: OverviewPanel,
+  phoneScan: PhoneScanPanel,
   targets: TargetsPanel,
   livefeed: LiveFeedPanel,
   location: LocationPanel,
