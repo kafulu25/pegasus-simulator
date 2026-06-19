@@ -1,1 +1,1 @@
-export { default as ExpertPanel } from './ExpertMode';
+export { ExpertMode as ExpertPanel } from './ExpertMode';
