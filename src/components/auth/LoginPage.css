@@ -1,4 +1,17 @@
 /* src/components/auth/LoginPage.css */
+
+/* Define variables directly inside this file */
+:root {
+  --accent: #00ff00;
+  --accent-dim: #00cc00;
+  --bg-card: #0d1117;
+  --bg-panel: #161b22;
+  --text-primary: #e6edf3;
+  --text-muted: #8b949e;
+  --border: #30363d;
+  --red: #ff4444;
+}
+
 .login-container {
   position: fixed;
   top: 0;
@@ -37,8 +50,8 @@
 .login-box {
   position: relative;
   z-index: 1;
-  background: #0d1117;
-  border: 1px solid #00ff00;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
   border-radius: 16px;
   padding: 40px;
   width: 400px;
@@ -57,14 +70,14 @@
 }
 
 .login-header h1 {
-  color: #00ff00;
+  color: var(--accent);
   font-size: 28px;
   letter-spacing: 4px;
   margin-bottom: 5px;
 }
 
 .login-header p {
-  color: #8b949e;
+  color: var(--text-muted);
   font-size: 11px;
   letter-spacing: 2px;
 }
@@ -76,7 +89,7 @@
 .input-group label {
   display: block;
   font-size: 11px;
-  color: #8b949e;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 8px;
@@ -85,10 +98,10 @@
 .input-group input {
   width: 100%;
   padding: 12px 16px;
-  background: #161b22;
-  border: 1px solid #30363d;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  color: #e6edf3;
+  color: var(--text-primary);
   font-size: 14px;
   font-family: monospace;
   transition: all 0.2s;
@@ -96,19 +109,19 @@
 
 .input-group input:focus {
   outline: none;
-  border-color: #00ff00;
+  border-color: var(--accent);
   box-shadow: 0 0 10px rgba(0, 200, 255, 0.2);
 }
 
 .input-group input::placeholder {
-  color: #8b949e;
+  color: var(--text-muted);
   opacity: 0.5;
 }
 
 .error-message {
   background: rgba(255, 77, 77, 0.1);
   border: 1px solid rgba(255, 77, 77, 0.3);
-  color: #ff4444;
+  color: var(--red);
   padding: 10px;
   border-radius: 6px;
   font-size: 12px;
@@ -119,7 +132,7 @@
 .login-box button {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #00ff00, #00cc00);
+  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
   color: #000;
   border: none;
   border-radius: 8px;
@@ -144,8 +157,8 @@
   margin-top: 25px;
   text-align: center;
   font-size: 10px;
-  color: #8b949e;
-  border-top: 1px solid #30363d;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
   padding-top: 20px;
 }
 
