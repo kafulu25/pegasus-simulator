@@ -9,9 +9,8 @@ import { useTargetStore } from './stores/targetStore';
 import { mockTargets } from './utils/mockData';
 import './App.css';
 
-// Import all panels – using explicit file paths
+// Import all panels
 import { OverviewPanel } from './components/overview/OverviewPanel';
-import PhoneScanPanel from './components/phoneScan/PhoneScan';
 import { TargetsPanel } from './components/targets/TargetsPanel';
 import { LiveFeedPanel } from './components/livefeed/LiveFeedPanel';
 import { LocationPanel } from './components/location/LocationPanel';
@@ -33,10 +32,8 @@ import { CasesPanel } from './components/cases/CasesPanel';
 import { ReportsPanel } from './components/reports/ReportsPanel';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { OsintPanel } from './components/osint/OsintPanel';
-// ✅ Correct named import for ExpertMode
 import { ExpertMode } from './components/expert/ExpertMode';
-// PhoneScan – if you have it, uncomment and add to panelMap
-// import PhoneScanPanel from './components/phoneScan/PhoneScan';
+import PhoneScan from './components/phoneScan/PhoneScan';  // <-- added
 
 const panelMap: Record<string, React.ComponentType> = {
   overview: OverviewPanel,
@@ -64,7 +61,6 @@ const panelMap: Record<string, React.ComponentType> = {
   expert: ExpertMode,
   phoneScan: PhoneScan,  // <-- added
 };
-
 
 function App() {
   const { isAuthenticated, login } = useAuthStore();
@@ -99,13 +95,8 @@ function App() {
     }
   };
 
-  if (!isInitialized) {
-    return <div className="loading-screen">Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
+  if (!isInitialized) return <div className="loading-screen">Loading...</div>;
+  if (!isAuthenticated) return <LoginPage onLogin={handleLogin} />;
 
   const ActivePanel = panelMap[currentView] || OverviewPanel;
 
