@@ -1,21 +1,55 @@
+/* src/App.css */
+:root {
+  --bg-primary: #0a0c10;
+  --bg-secondary: #14161a;
+  --text-primary: #00ff00;
+  --text-secondary: #00cc00;
+  --border-color: #1a3a1a;
+  --shadow-color: rgba(0, 255, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background: #0a0c10;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+}
+
+#root {
+  height: 100%;
+}
+
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .main-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 .content {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
   background: var(--bg-primary);
+  color: var(--text-primary);
 }
+
 .loading-screen {
   position: fixed;
   top: 0;
@@ -27,7 +61,7 @@
   align-items: center;
   justify-content: center;
   color: #00ff00;
-  font-family: monospace;
+  font-family: 'Courier New', monospace;
   font-size: 18px;
   z-index: 10000;
 }
@@ -42,4 +76,22 @@
   40% { content: '.'; }
   60% { content: '..'; }
   80%, 100% { content: '...'; }
+}
+
+/* Scrollbar styling */
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--text-primary);
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
