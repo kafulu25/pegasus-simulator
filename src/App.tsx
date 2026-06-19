@@ -27,12 +27,12 @@ import { AdminPanel } from './components/admin';
 import { AlertsPanel } from './components/alerts';
 import { CasesPanel } from './components/cases';
 import { ExpertPanel } from './components/expert';
-import { FeedPanel } from './components/feed';
+// FeedPanel is removed – we only have LiveFeedPanel
 import { ReportsPanel } from './components/reports';
 import { ScreenPanel } from './components/screen';
 import { OsintPanel } from './components/osint';
 import { LiveFeedPanel } from './components/livefeed';
-import { PhoneScanPanel } from './components/phoneScan'; // confirmed from your index
+import { PhoneScanPanel } from './components/phoneScan';
 
 import './App.css';
 
@@ -61,7 +61,7 @@ function App() {
     return <LoginPage />;
   }
 
-  // Map views to panel components
+  // Map views to panel components – matches sidebar items
   const viewComponents: Record<string, React.ReactNode> = {
     overview: <OverviewPanel />,
     targets: <TargetsPanel />,
@@ -81,7 +81,7 @@ function App() {
     alerts: <AlertsPanel />,
     cases: <CasesPanel />,
     expert: <ExpertPanel />,
-    feed: <FeedPanel />,
+    // feed: <FeedPanel />, // removed – not in sidebar
     reports: <ReportsPanel />,
     screen: <ScreenPanel />,
     osint: <OsintPanel />,
