@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { usePhoneScanStore } from '@/stores/phoneScanStore';
-import { generatePacket, processPacketForData, buildFinalReport } from '@/utils/phoneScanUtils';
+import { usePhoneScanStore } from '../../stores/phoneScanStore';
+import { generatePacket, processPacketForData, buildFinalReport } from '../../utils/phoneScanUtils';
 
 const SCAN_DURATION = 30; // seconds
 
