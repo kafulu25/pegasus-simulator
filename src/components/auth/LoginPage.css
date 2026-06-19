@@ -4,6 +4,7 @@
   --accent: #0193c6;
   --accent-dim: #017aa6;
   --accent-hover: #33b5d9;
+  --accent-glow: rgba(1, 147, 198, 0.25);
   --bg-card: #0d1117;
   --bg-panel: #161b22;
   --text-primary: #e6edf3;
@@ -25,7 +26,6 @@
   z-index: 10000;
 }
 
-/* Subtle matrix-like background (matches your screenshot) */
 .matrix-bg {
   position: absolute;
   top: 0;
@@ -52,12 +52,12 @@
   position: relative;
   z-index: 1;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent);          /* <-- Light blue stroke */
   border-radius: 16px;
   padding: 40px 40px 32px;
   width: 400px;
   max-width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 30px var(--accent-glow), 0 20px 60px rgba(0, 0, 0, 0.6); /* subtle glow */
 }
 
 .login-header {
@@ -116,7 +116,7 @@
 .input-group input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 10px rgba(1, 147, 198, 0.2);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .input-group input::placeholder {
