@@ -38,15 +38,23 @@ const PhoneScan: React.FC = () => {
   }, [packets]);
 
   const handleStartScan = () => {
-    if (!phone.trim()) return;
+    if (!phone.trim()) {
+      console.log('No phone number entered');
+      return;
+    }
+    console.log('Starting scan for:', phone);
     reset();
     startScan(phone);
 
     let localTime = new Date();
     let progressVal = 0;
 
+    // Packet interval
     packetIntervalRef.current = setInterval(() => {
-      if (!usePhoneScanStore.getState().isScanning) return;
+      if (!usePhoneScanStore.getState().isScanning) {
+        console.log('Scanning stopped, clearing packet interval');
+        return;
+      }
       const minsToAdd = Math.floor(Math.random() * 4) + 2;
       localTime.setMinutes(localTime.getMinutes() + minsToAdd);
       const packet = generatePacket(phone);
@@ -58,6 +66,7 @@ const PhoneScan: React.FC = () => {
       if (extracted.message) addMessage(extracted.message);
       if (extracted.contact) addContact(extracted.contact);
 
+      // Update status occasionally
       if (packets.length % 5 === 0) {
         const statuses = [
           'Sniffing network traffic...',
@@ -71,10 +80,12 @@ const PhoneScan: React.FC = () => {
       }
     }, 500);
 
+    // Progress interval
     progressIntervalRef.current = setInterval(() => {
       progressVal += 1;
       setProgress(Math.min(progressVal, 100));
       if (progressVal >= 100) {
+        console.log('Scan complete, generating report');
         clearInterval(packetIntervalRef.current!);
         clearInterval(progressIntervalRef.current!);
         stopScan();
@@ -86,6 +97,7 @@ const PhoneScan: React.FC = () => {
   };
 
   const handleStopScan = () => {
+    console.log('Stop scan clicked');
     if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     stopScan();
