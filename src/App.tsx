@@ -3,7 +3,6 @@ import { useAuthStore } from './stores/authStore';
 import { useTargetStore } from './stores/targetStore';
 import { useFeedStore } from './stores/feedStore';
 import { useViewStore } from './stores/viewStore';
-import { useAlertStore } from './stores/alertStore';
 import { mockTargets } from './utils/mockData';
 import { LoginPage } from './components/auth/LoginPage';
 import { TopBar } from './components/layout/TopBar';
@@ -44,7 +43,8 @@ function App() {
   // Load targets from localStorage on auth
   useEffect(() => {
     if (isAuthenticated) {
-      useTargetStore.getState().loadFromStorage();
+      // Load from localStorage (if you have that method)
+      useTargetStore.getState().loadFromStorage?.();
       const currentTargets = useTargetStore.getState().targets;
       if (currentTargets.length === 0) {
         setTargets(mockTargets);
