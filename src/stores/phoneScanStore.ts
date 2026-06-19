@@ -49,17 +49,23 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   discoveredMessages: [],
   discoveredContacts: new Set(),
   scanResult: null,
-  startScan: (phone) => set({
-    isScanning: true,
-    progress: 0,
-    packets: [],
-    discoveredCalls: [],
-    discoveredMessages: [],
-    discoveredContacts: new Set(),
-    scanResult: null,
-    statusText: 'Initializing wiretap...'
-  }),
-  stopScan: () => set({ isScanning: false }),
+  startScan: (phone) => {
+    console.log('startScan called with phone:', phone);
+    set({
+      isScanning: true,
+      progress: 0,
+      packets: [],
+      discoveredCalls: [],
+      discoveredMessages: [],
+      discoveredContacts: new Set(),
+      scanResult: null,
+      statusText: 'Initializing wiretap...'
+    });
+  },
+  stopScan: () => {
+    console.log('stopScan called');
+    set({ isScanning: false });
+  },
   addPacket: (packet) => set((state) => ({ packets: [...state.packets, packet] })),
   addCall: (call) => set((state) => ({ discoveredCalls: [...state.discoveredCalls, call] })),
   addMessage: (msg) => set((state) => ({ discoveredMessages: [...state.discoveredMessages, msg] })),
@@ -70,15 +76,21 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   }),
   setProgress: (progress) => set({ progress }),
   setStatus: (statusText) => set({ statusText }),
-  completeScan: (result) => set({ scanResult: result, isScanning: false, statusText: 'Scan complete' }),
-  reset: () => set({
-    isScanning: false,
-    progress: 0,
-    statusText: 'Idle',
-    packets: [],
-    discoveredCalls: [],
-    discoveredMessages: [],
-    discoveredContacts: new Set(),
-    scanResult: null,
-  }),
+  completeScan: (result) => {
+    console.log('completeScan with result:', result);
+    set({ scanResult: result, isScanning: false, statusText: 'Scan complete' });
+  },
+  reset: () => {
+    console.log('reset called');
+    set({
+      isScanning: false,
+      progress: 0,
+      statusText: 'Idle',
+      packets: [],
+      discoveredCalls: [],
+      discoveredMessages: [],
+      discoveredContacts: new Set(),
+      scanResult: null,
+    });
+  },
 }));
