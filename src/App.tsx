@@ -27,7 +27,7 @@ import { AdminPanel } from './components/admin';
 import { AlertsPanel } from './components/alerts';
 import { CasesPanel } from './components/cases';
 import { ExpertPanel } from './components/expert';
-// FeedPanel is removed – we only have LiveFeedPanel
+// FeedPanel is NOT imported – we use LiveFeedPanel instead
 import { ReportsPanel } from './components/reports';
 import { ScreenPanel } from './components/screen';
 import { OsintPanel } from './components/osint';
@@ -61,7 +61,7 @@ function App() {
     return <LoginPage />;
   }
 
-  // Map views to panel components – matches sidebar items
+  // Map views to panel components – matches sidebar items exactly
   const viewComponents: Record<string, React.ReactNode> = {
     overview: <OverviewPanel />,
     targets: <TargetsPanel />,
@@ -81,7 +81,7 @@ function App() {
     alerts: <AlertsPanel />,
     cases: <CasesPanel />,
     expert: <ExpertPanel />,
-    // feed: <FeedPanel />, // removed – not in sidebar
+    // feed: NOT INCLUDED – no sidebar item for it
     reports: <ReportsPanel />,
     screen: <ScreenPanel />,
     osint: <OsintPanel />,
