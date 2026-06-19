@@ -11,6 +11,7 @@ import './App.css';
 
 // Import all panels – using explicit file paths
 import { OverviewPanel } from './components/overview/OverviewPanel';
+import PhoneScanPanel from './components/phoneScan/PhoneScan';
 import { TargetsPanel } from './components/targets/TargetsPanel';
 import { LiveFeedPanel } from './components/livefeed/LiveFeedPanel';
 import { LocationPanel } from './components/location/LocationPanel';
