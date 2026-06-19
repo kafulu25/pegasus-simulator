@@ -1,4 +1,5 @@
 /* src/components/auth/LoginPage.css */
+
 :root {
   --accent: #0193c6;
   --accent-dim: #017aa6;
@@ -24,6 +25,7 @@
   z-index: 10000;
 }
 
+/* Subtle matrix-like background (matches your screenshot) */
 .matrix-bg {
   position: absolute;
   top: 0;
@@ -32,8 +34,8 @@
   bottom: 0;
   background: repeating-linear-gradient(
     0deg,
-    rgba(1, 147, 198, 0.02) 0px,
-    rgba(1, 147, 198, 0.02) 2px,
+    rgba(1, 147, 198, 0.015) 0px,
+    rgba(1, 147, 198, 0.015) 2px,
     transparent 2px,
     transparent 6px
   );
@@ -52,10 +54,10 @@
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 40px;
+  padding: 40px 40px 32px;
   width: 400px;
   max-width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 .login-header {
@@ -64,22 +66,24 @@
 }
 
 .login-logo {
-  font-size: 60px;
-  margin-bottom: 10px;
+  font-size: 56px;
+  margin-bottom: 8px;
 }
 
 .login-header h1 {
   color: var(--accent);
   font-size: 28px;
   letter-spacing: 4px;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 .login-header p {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .input-group {
@@ -93,6 +97,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .input-group input {
@@ -103,8 +108,9 @@
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
-  font-family: monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: all 0.2s;
+  box-sizing: border-box;
 }
 
 .input-group input:focus {
@@ -119,50 +125,56 @@
 }
 
 .error-message {
-  background: rgba(255, 77, 77, 0.1);
+  background: rgba(255, 77, 77, 0.08);
   border: 1px solid rgba(255, 77, 77, 0.3);
   color: var(--red);
   padding: 10px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
   margin-bottom: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .login-box button {
   width: 100%;
-  padding: 12px;
+  padding: 13px;
   background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-  color: #fff;
+  color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 2px;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: 0 2px 8px rgba(1, 147, 198, 0.2);
 }
 
 .login-box button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(1, 147, 198, 0.3);
+  box-shadow: 0 8px 25px rgba(1, 147, 198, 0.35);
   background: linear-gradient(135deg, var(--accent-hover), var(--accent));
 }
 
 .login-box button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .login-footer {
-  margin-top: 25px;
+  margin-top: 28px;
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   padding-top: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .login-footer p {
-  margin: 3px 0;
+  margin: 4px 0;
+  letter-spacing: 0.5px;
 }
