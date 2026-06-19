@@ -1,8 +1,8 @@
 /* src/components/auth/LoginPage.css */
 :root {
-  --accent: #4a9eff;
-  --accent-dim: #3a7fcc;
-  --accent-hover: #6ab0ff;
+  --accent: #0193c6;
+  --accent-dim: #017aa6;
+  --accent-hover: #33b5d9;
   --bg-card: #0d1117;
   --bg-panel: #161b22;
   --text-primary: #e6edf3;
@@ -32,8 +32,8 @@
   bottom: 0;
   background: repeating-linear-gradient(
     0deg,
-    rgba(74, 158, 255, 0.02) 0px,
-    rgba(74, 158, 255, 0.02) 2px,
+    rgba(1, 147, 198, 0.02) 0px,
+    rgba(1, 147, 198, 0.02) 2px,
     transparent 2px,
     transparent 6px
   );
@@ -110,7 +110,7 @@
 .input-group input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 10px rgba(74, 158, 255, 0.2);
+  box-shadow: 0 0 10px rgba(1, 147, 198, 0.2);
 }
 
 .input-group input::placeholder {
@@ -145,7 +145,7 @@
 
 .login-box button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(74, 158, 255, 0.3);
+  box-shadow: 0 5px 20px rgba(1, 147, 198, 0.3);
   background: linear-gradient(135deg, var(--accent-hover), var(--accent));
 }
 
