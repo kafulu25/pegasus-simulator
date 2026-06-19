@@ -1,1 +1,1 @@
-export { default } from './PhoneScan';
+export { PhoneScanPanel } from './PhoneScanPanel';
