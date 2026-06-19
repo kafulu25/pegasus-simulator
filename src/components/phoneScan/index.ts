@@ -1,2 +1,2 @@
 // src/components/phoneScan/index.ts
-export { default } from './PhoneScan';
+export { default as PhoneScanPanel } from './PhoneScan';
