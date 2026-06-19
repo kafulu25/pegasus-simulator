@@ -32,8 +32,9 @@ import { CasesPanel } from './components/cases/CasesPanel';
 import { ReportsPanel } from './components/reports/ReportsPanel';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { OsintPanel } from './components/osint/OsintPanel';
-import ExpertMode from './components/expert/ExpertMode';
-// Uncomment if you have PhoneScan panel:
+// ExpertMode is a named export – corrected import
+import { ExpertMode } from './components/expert/ExpertMode';
+// PhoneScan – if you have it, uncomment and add to panelMap
 // import PhoneScanPanel from './components/phoneScan/PhoneScan';
 
 const panelMap: Record<string, React.ComponentType> = {
@@ -60,7 +61,7 @@ const panelMap: Record<string, React.ComponentType> = {
   admin: AdminPanel,
   osint: OsintPanel,
   expert: ExpertMode,
-  // phoneScan: PhoneScanPanel,
+  // phoneScan: PhoneScanPanel, // uncomment if needed
 };
 
 function App() {
@@ -96,7 +97,7 @@ function App() {
       setView('overview');
       startLiveStream();
     }
-    // If invalid, LoginPage will show error (we don't need to do anything)
+    // If invalid, LoginPage will show error
   };
 
   if (!isInitialized) {
