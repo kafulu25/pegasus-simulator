@@ -40,7 +40,6 @@ import { ExpertMode } from './components/expert/ExpertMode';
 
 const panelMap: Record<string, React.ComponentType> = {
   overview: OverviewPanel,
-  phoneScan: PhoneScanPanel,
   targets: TargetsPanel,
   livefeed: LiveFeedPanel,
   location: LocationPanel,
@@ -63,8 +62,9 @@ const panelMap: Record<string, React.ComponentType> = {
   admin: AdminPanel,
   osint: OsintPanel,
   expert: ExpertMode,
-  // phoneScan: PhoneScanPanel,
+  phoneScan: PhoneScan,  // <-- added
 };
+
 
 function App() {
   const { isAuthenticated, login } = useAuthStore();
