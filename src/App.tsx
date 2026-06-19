@@ -27,7 +27,6 @@ import { AdminPanel } from './components/admin';
 import { AlertsPanel } from './components/alerts';
 import { CasesPanel } from './components/cases';
 import { ExpertPanel } from './components/expert';
-// FeedPanel is NOT imported – we use LiveFeedPanel instead
 import { ReportsPanel } from './components/reports';
 import { ScreenPanel } from './components/screen';
 import { OsintPanel } from './components/osint';
@@ -38,12 +37,13 @@ import './App.css';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const login = useAuthStore((state) => state.login); // <-- get login function
+  const login = useAuthStore((state) => state.login);
   const setTargets = useTargetStore((state) => state.setTargets);
   const startLiveStream = useFeedStore((state) => state.startLiveStream);
   const setView = useViewStore((state) => state.setView);
   const currentView = useViewStore((state) => state.currentView);
 
+  // On login, load data and set default view if needed
   useEffect(() => {
     if (isAuthenticated) {
       useTargetStore.getState().loadFromStorage?.();
@@ -52,17 +52,20 @@ function App() {
         setTargets(mockTargets);
       }
       startLiveStream();
-      if (!useViewStore.getState().currentView) {
+      
+      // ✅ Force set view to 'overview' if it's not set or is an empty string
+      const view = useViewStore.getState().currentView;
+      if (!view || view === '') {
         setView('overview');
       }
     }
   }, [isAuthenticated, setTargets, startLiveStream, setView]);
 
   if (!isAuthenticated) {
-    return <LoginPage onLogin={(username, password) => login(username)} />; // <-- pass login
+    return <LoginPage onLogin={(username, password) => login(username)} />;
   }
 
-  // Map views to panel components – matches sidebar items exactly
+  // Map views to panel components
   const viewComponents: Record<string, React.ReactNode> = {
     overview: <OverviewPanel />,
     targets: <TargetsPanel />,
@@ -82,7 +85,6 @@ function App() {
     alerts: <AlertsPanel />,
     cases: <CasesPanel />,
     expert: <ExpertPanel />,
-    // feed: NOT INCLUDED – no sidebar item for it
     reports: <ReportsPanel />,
     screen: <ScreenPanel />,
     osint: <OsintPanel />,
@@ -90,13 +92,16 @@ function App() {
     phoneScan: <PhoneScanPanel />,
   };
 
+  // ✅ Always use a fallback – even if currentView is missing
+  const component = viewComponents[currentView] || <OverviewPanel />;
+
   return (
     <div className="app-container">
       <TopBar />
       <div className="app-body">
         <Sidebar />
         <div className="main-content">
-          {viewComponents[currentView] || <OverviewPanel />}
+          {component}
         </div>
       </div>
     </div>
