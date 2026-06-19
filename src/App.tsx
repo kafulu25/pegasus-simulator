@@ -9,7 +9,7 @@ import { useTargetStore } from './stores/targetStore';
 import { mockTargets } from './utils/mockData';
 import './App.css';
 
-// Import all panels – using explicit file paths to avoid index.ts issues
+// Import all panels – using explicit file paths
 import { OverviewPanel } from './components/overview/OverviewPanel';
 import { TargetsPanel } from './components/targets/TargetsPanel';
 import { LiveFeedPanel } from './components/livefeed/LiveFeedPanel';
@@ -32,9 +32,8 @@ import { CasesPanel } from './components/cases/CasesPanel';
 import { ReportsPanel } from './components/reports/ReportsPanel';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { OsintPanel } from './components/osint/OsintPanel';
-// ExpertMode is default export – fixed import
 import ExpertMode from './components/expert/ExpertMode';
-// PhoneScan – if you have it, uncomment and add to panelMap
+// Uncomment if you have PhoneScan panel:
 // import PhoneScanPanel from './components/phoneScan/PhoneScan';
 
 const panelMap: Record<string, React.ComponentType> = {
@@ -61,62 +60,53 @@ const panelMap: Record<string, React.ComponentType> = {
   admin: AdminPanel,
   osint: OsintPanel,
   expert: ExpertMode,
-  // phoneScan: PhoneScanPanel, // uncomment if needed
+  // phoneScan: PhoneScanPanel,
 };
 
 function App() {
-  // ALL hooks at top level
   const { isAuthenticated, login } = useAuthStore();
   const { setTargets } = useTargetStore();
   const { startLiveStream } = useFeedStore();
   const { setView, currentView } = useViewStore();
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Check localStorage manually to rehydrate if Zustand fails
   useEffect(() => {
-    // Initialize data
-    setTargets(mockTargets);
-    setIsInitialized(true);
-    
-    // Check if already authenticated from localStorage
-    const storedAuth = localStorage.getItem('pegasus-auth');
-    if (storedAuth) {
+    const stored = localStorage.getItem('pegasus-auth');
+    if (stored) {
       try {
-        const parsed = JSON.parse(storedAuth);
+        const parsed = JSON.parse(stored);
         if (parsed.state?.isAuthenticated) {
           login(parsed.state.user);
           setView('overview');
           startLiveStream();
         }
       } catch (e) {
-        console.error('Failed to parse auth:', e);
+        console.error('Auth parse error:', e);
       }
     }
-  }, []); // runs once
+    // Always initialize data
+    setTargets(mockTargets);
+    setIsInitialized(true);
+  }, []);
 
   const handleLogin = (username: string, password: string) => {
     if (username === 'admin' && password === 'pegasus2024') {
       login(username);
       setView('overview');
       startLiveStream();
-    } else {
-      // Let LoginPage handle error display – we just return false to trigger error
-      // Actually the LoginPage already shows error; we just don't login.
-      // We'll return false, but LoginPage doesn't check return value.
-      // The login function will not be called, so the error will be shown.
     }
+    // If invalid, LoginPage will show error (we don't need to do anything)
   };
 
-  // Show loading screen while initializing
   if (!isInitialized) {
     return <div className="loading-screen">Loading...</div>;
   }
 
-  // Show login page if not authenticated
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
-  // Show main app if authenticated
   const ActivePanel = panelMap[currentView] || OverviewPanel;
 
   return (
