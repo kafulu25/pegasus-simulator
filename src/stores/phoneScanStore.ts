@@ -1,32 +1,17 @@
-// src/stores/phoneScanStore.ts
 import { create } from 'zustand';
+import type { CallLog, Message } from '@/types';
 
 export interface Packet {
-  timestamp: string;      // e.g., "2026-06-19 14:23:45"
-  data: string;           // human-readable, e.g., "SMS packet from 0755123456"
-  base64: string;         // Base64 encoded data
+  timestamp: string;
+  data: string;
+  base64: string;
   type: 'sms' | 'call' | 'gps' | 'app' | 'contact' | 'keystroke';
-}
-
-export interface CallLog {
-  direction: 'incoming' | 'outgoing' | 'missed';
-  number: string;
-  duration: string;
-  time: string;
-}
-
-export interface MessageLog {
-  platform: 'sms' | 'whatsapp' | 'telegram';
-  direction: 'incoming' | 'outgoing';
-  number: string;
-  content: string;
-  time: string;
 }
 
 export interface ScanResult {
   phoneNumber: string;
   calls: CallLog[];
-  messages: MessageLog[];
+  messages: Message[];
   associatedNumbers: { number: string; frequency: number }[];
   topCallers: { number: string; count: number }[];
   topCallees: { number: string; count: number }[];
@@ -35,24 +20,19 @@ export interface ScanResult {
 }
 
 interface PhoneScanStore {
-  // Scan state
   isScanning: boolean;
-  progress: number; // 0-100
+  progress: number;
   statusText: string;
   packets: Packet[];
-  // Discovered data (populated live)
   discoveredCalls: CallLog[];
-  discoveredMessages: MessageLog[];
-  discoveredContacts: Set<string>; // track unique numbers
-  // Final result
+  discoveredMessages: Message[];
+  discoveredContacts: Set<string>;
   scanResult: ScanResult | null;
-  
-  // Actions
   startScan: (phone: string) => void;
   stopScan: () => void;
   addPacket: (packet: Packet) => void;
   addCall: (call: CallLog) => void;
-  addMessage: (msg: MessageLog) => void;
+  addMessage: (msg: Message) => void;
   addContact: (number: string) => void;
   setProgress: (progress: number) => void;
   setStatus: (text: string) => void;
@@ -69,11 +49,10 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   discoveredMessages: [],
   discoveredContacts: new Set(),
   scanResult: null,
-
-  startScan: (phone) => set({ 
-    isScanning: true, 
-    progress: 0, 
-    packets: [], 
+  startScan: (phone) => set({
+    isScanning: true,
+    progress: 0,
+    packets: [],
     discoveredCalls: [],
     discoveredMessages: [],
     discoveredContacts: new Set(),
@@ -92,14 +71,14 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   setProgress: (progress) => set({ progress }),
   setStatus: (statusText) => set({ statusText }),
   completeScan: (result) => set({ scanResult: result, isScanning: false, statusText: 'Scan complete' }),
-  reset: () => set({ 
-    isScanning: false, 
-    progress: 0, 
-    statusText: 'Idle', 
-    packets: [], 
+  reset: () => set({
+    isScanning: false,
+    progress: 0,
+    statusText: 'Idle',
+    packets: [],
     discoveredCalls: [],
     discoveredMessages: [],
     discoveredContacts: new Set(),
-    scanResult: null 
+    scanResult: null,
   }),
 }));
