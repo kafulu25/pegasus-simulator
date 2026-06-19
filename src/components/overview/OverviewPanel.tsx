@@ -7,18 +7,21 @@ import './OverviewPanel.css';
 export const OverviewPanel: React.FC = () => {
   return (
     <div className="overview-panel">
-      <div className="overview-top-row">
-        <div className="panel-header">
+      <div className="panel-header">
+        <div>
           <div className="panel-title">
             <span className="icon">📊</span> Operations Overview
           </div>
           <div className="panel-subtitle">Real-time surveillance intelligence dashboard</div>
         </div>
-        <div className="stats-cards-wrapper">
-          <StatsCards />
+        <div className="flex gap-8">
+          <button className="btn btn-ghost" onClick={() => window.location.reload()}>
+            ↺ Refresh
+          </button>
         </div>
       </div>
       <div className="scroll-content">
+        <StatsCards />
         <div className="grid-2">
           <GlobalMap />
           <RecentActivityFeed />
