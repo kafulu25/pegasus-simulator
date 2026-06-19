@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { CallLog, Message } from '@/types';
+import type { CallLog, Message } from '../types';
 
 export interface Packet {
   timestamp: string;
