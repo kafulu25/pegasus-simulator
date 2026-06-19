@@ -59,11 +59,12 @@ html, body {
   overflow: hidden;
   background: var(--bg-primary);
 }
+/* src/App.css – updated .content */
 .content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px;
+  padding: 0;                    /* <-- remove all padding */
   background: var(--bg-primary);
   color: var(--text-primary);
 }
