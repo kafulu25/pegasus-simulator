@@ -1,5 +1,5 @@
-// src/utils/phoneScanUtils.ts
-import { Packet, CallLog, MessageLog, ScanResult } from '@/stores/phoneScanStore';
+import { Packet, CallLog, Message, ScanResult } from '@/stores/phoneScanStore';
+import type { CallLog as ExistingCallLog, Message as ExistingMessage } from '@/types';
 
 // Ugandan number pool
 const UG_NUMBERS = ['0755123456', '0776123456', '0788123456', '0701123456', '0759988776', '0788112233'];
@@ -9,7 +9,6 @@ const PACKET_TYPES = ['sms', 'call', 'gps', 'app', 'contact', 'keystroke'] as co
 const randomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-// Generate a Base64 string from random data
 const randomBase64 = (len: number = 32) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   let result = '';
@@ -19,11 +18,9 @@ const randomBase64 = (len: number = 32) => {
   return result;
 };
 
-// Create a packet with an advancing timestamp
-let currentPacketTime = new Date(); // will be advanced per packet
+let currentPacketTime = new Date();
 
-const generatePacket = (phone: string): Packet => {
-  // Advance time by 1-5 minutes per packet
+export const generatePacket = (phone: string): Packet => {
   const minutesToAdd = randomInt(1, 5);
   currentPacketTime.setMinutes(currentPacketTime.getMinutes() + minutesToAdd);
 
@@ -33,7 +30,7 @@ const generatePacket = (phone: string): Packet => {
 
   switch (type) {
     case 'sms':
-      data = `SMS ${randomItem(['incoming', 'outgoing'])} from/to ${otherNumber}: "${randomItem(['Hello', 'Meeting at 5', 'On my way', 'Call me later', 'I\'m here'])}"`;
+      data = `SMS ${randomItem(['incoming', 'outgoing'])} from/to ${otherNumber}: "${randomItem(['Hello', 'Meeting at 5', 'On my way', 'Call me later', "I'm here"])}"`;
       break;
     case 'call':
       data = `Call ${randomItem(['incoming', 'outgoing', 'missed'])} from/to ${otherNumber} (${randomInt(0, 300)}s)`;
@@ -58,14 +55,11 @@ const generatePacket = (phone: string): Packet => {
   return { timestamp, data, base64, type };
 };
 
-// Process a packet: if it contains a call or message, we store it permanently
 export const processPacketForData = (
   packet: Packet,
   phone: string,
-): { call?: CallLog; message?: MessageLog; contact?: string } => {
-  const result: { call?: CallLog; message?: MessageLog; contact?: string } = {};
-
-  // Extract phone number from packet data (simple regex)
+): { call?: ExistingCallLog; message?: ExistingMessage; contact?: string } => {
+  const result: { call?: ExistingCallLog; message?: ExistingMessage; contact?: string } = {};
   const numberMatch = packet.data.match(/(07\d{8})/);
   const extractedNumber = numberMatch ? numberMatch[1] : randomItem(UG_NUMBERS);
 
@@ -75,10 +69,15 @@ export const processPacketForData = (
     const direction = (directionMatch ? directionMatch[1] : 'incoming') as 'incoming' | 'outgoing' | 'missed';
     const duration = durationMatch ? `${Math.floor(parseInt(durationMatch[1]) / 60)}:${String(parseInt(durationMatch[1]) % 60).padStart(2, '0')}` : '0:00';
     result.call = {
+      id: Date.now() + Math.random(),
+      targetId: 0,
+      targetName: phone,
       direction,
       number: extractedNumber,
-      duration,
-      time: packet.timestamp,
+      date: new Date(packet.timestamp),
+      duration: parseInt(durationMatch?.[1] || '0'),
+      hasRecording: false,
+      app: 'Unknown',
     };
   }
 
@@ -87,14 +86,14 @@ export const processPacketForData = (
     const contentMatch = packet.data.match(/"([^"]+)"/);
     const direction = (directionMatch ? directionMatch[1] : 'incoming') as 'incoming' | 'outgoing';
     const content = contentMatch ? contentMatch[1] : 'Hello';
-    // Assign random platform based on packet data
-    const platform = randomItem(['sms', 'whatsapp', 'telegram']) as 'sms' | 'whatsapp' | 'telegram';
+    const platform = randomItem(['whatsapp', 'telegram', 'signal', 'sms']) as 'whatsapp' | 'telegram' | 'signal' | 'sms';
     result.message = {
-      platform,
-      direction,
-      number: extractedNumber,
-      content,
-      time: packet.timestamp,
+      id: Date.now() + Math.random(),
+      conversationId: 0,
+      direction: direction === 'incoming' ? 'in' : 'out',
+      text: content,
+      timestamp: new Date(packet.timestamp),
+      isRead: false,
     };
   }
 
@@ -108,17 +107,15 @@ export const processPacketForData = (
   return result;
 };
 
-// Generate final scan result from accumulated data
 export const buildFinalReport = (
   phone: string,
-  calls: CallLog[],
-  messages: MessageLog[],
+  calls: ExistingCallLog[],
+  messages: ExistingMessage[],
   contacts: Set<string>,
 ): ScanResult => {
-  // Calculate frequencies
   const numberCounts: Record<string, number> = {};
   [...calls, ...messages].forEach(item => {
-    const num = item.number;
+    const num = 'number' in item ? (item as ExistingCallLog).number : 'Unknown';
     numberCounts[num] = (numberCounts[num] || 0) + 1;
   });
 
@@ -127,7 +124,6 @@ export const buildFinalReport = (
     .sort((a, b) => b.frequency - a.frequency)
     .slice(0, 10);
 
-  // Top callers (only call logs)
   const callerCounts: Record<string, number> = {};
   calls.forEach(c => {
     if (c.direction === 'incoming' || c.direction === 'outgoing') {
@@ -139,17 +135,12 @@ export const buildFinalReport = (
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  // Top callees (same, just for symmetry)
   const topCallees = topCallers.slice(0, 5);
 
-  // Coordinates – pick one from the last GPS packet (or random)
   const coord = { lat: 0.3136 + (Math.random() - 0.5) * 0.05, lng: 32.5811 + (Math.random() - 0.5) * 0.05 };
   const coordTimestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
-  // Installed apps – based on app packets discovered
   const appSet = new Set<string>();
-  // In a real scenario, we'd scan packets for "App usage detected: XXX"
-  // For simulation, we'll pick 3-5 random apps
   const numApps = randomInt(3, 5);
   for (let i = 0; i < numApps; i++) {
     appSet.add(randomItem(APPS));
