@@ -1,2 +1,1 @@
-// src/components/expert/index.ts
-export { ExpertPanel } from './ExpertPanel';
+export { ExpertPanel } from './Expert';
