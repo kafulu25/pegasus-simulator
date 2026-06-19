@@ -173,7 +173,7 @@ html, body {
   border-radius: 4px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: var(--accent); /* #0193c6 */
   border-radius: 4px;
 }
 *::-webkit-scrollbar-thumb:hover {
