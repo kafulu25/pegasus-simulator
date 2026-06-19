@@ -1,1 +1,2 @@
-export { default as ExpertPanel } from './ExpertPanel';
+
+export { ExpertPanel } from './ExpertPanel';
