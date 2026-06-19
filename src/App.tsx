@@ -38,6 +38,7 @@ import './App.css';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const login = useAuthStore((state) => state.login); // <-- get login function
   const setTargets = useTargetStore((state) => state.setTargets);
   const startLiveStream = useFeedStore((state) => state.startLiveStream);
   const setView = useViewStore((state) => state.setView);
@@ -58,7 +59,7 @@ function App() {
   }, [isAuthenticated, setTargets, startLiveStream, setView]);
 
   if (!isAuthenticated) {
-    return <LoginPage />;
+    return <LoginPage onLogin={(username, password) => login(username)} />; // <-- pass login
   }
 
   // Map views to panel components – matches sidebar items exactly
