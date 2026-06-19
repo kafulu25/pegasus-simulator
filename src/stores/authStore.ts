@@ -1,3 +1,4 @@
+// src/stores/authStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -16,12 +17,15 @@ export const useAuthStore = create<AuthStore>()(
       login: (username) => {
         console.log('🔐 Login successful:', username);
         set({ isAuthenticated: true, user: username });
+        // Also update localStorage directly to be safe
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('user', username);
       },
       logout: () => {
         console.log('🚪 Logout triggered');
         set({ isAuthenticated: false, user: null });
-        // Clear any other stores if needed
-        localStorage.removeItem('pegasus-auth');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('user');
       },
     }),
     {
