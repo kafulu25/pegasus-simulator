@@ -3,12 +3,30 @@ import { LocationTable } from './LocationTable';
 import { ErrorBoundary } from '../../ErrorBoundary';
 import './LocationPanel.css';
 
-// Placeholder components (replace with real ones when ready)
+// Placeholder components styled to match the app's design
 const LiveMap: React.FC = () => {
   return (
-    <div style={{ padding: '20px', background: '#161b22', borderRadius: '8px', border: '1px solid #30363d', height: '300px' }}>
-      <div style={{ color: '#8b949e', marginBottom: '8px' }}>📍 Live Map</div>
-      <div style={{ height: 'calc(100% - 30px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#30363d' }}>
+    <div className="card" style={{ 
+      padding: '20px', 
+      background: 'var(--bg-card)', 
+      border: '1px solid var(--border)', 
+      borderRadius: '8px', 
+      height: '300px',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <div style={{ color: 'var(--text-muted)', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+        📍 Live Map
+      </div>
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        color: 'var(--text-muted)',
+        fontSize: '14px',
+        opacity: 0.7
+      }}>
         Map will appear here once the library is installed.
       </div>
     </div>
@@ -17,9 +35,27 @@ const LiveMap: React.FC = () => {
 
 const MovementHistory: React.FC = () => {
   return (
-    <div style={{ padding: '20px', background: '#161b22', borderRadius: '8px', border: '1px solid #30363d', height: '300px' }}>
-      <div style={{ color: '#8b949e', marginBottom: '8px' }}>🔄 Movement History</div>
-      <div style={{ height: 'calc(100% - 30px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#30363d' }}>
+    <div className="card" style={{ 
+      padding: '20px', 
+      background: 'var(--bg-card)', 
+      border: '1px solid var(--border)', 
+      borderRadius: '8px', 
+      height: '300px',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <div style={{ color: 'var(--text-muted)', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+        🔄 Movement History
+      </div>
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        color: 'var(--text-muted)',
+        fontSize: '14px',
+        opacity: 0.7
+      }}>
         Movement history will appear here.
       </div>
     </div>
