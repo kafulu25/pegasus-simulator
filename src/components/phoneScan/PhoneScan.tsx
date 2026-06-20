@@ -5,7 +5,7 @@ import { generatePacket, processPacketForData, buildFinalReport } from '../../ut
 
 // Simulate 6 hours in real time: we'll make progress take 360 seconds (6 minutes) for demo.
 // You can adjust this.
-const SCAN_DURATION = 360; // seconds (6 minutes) – adjust to taste
+const SCAN_DURATION = 10800; // 3 hours in seconds (for actual 3-hour scan)
 
 const PhoneScan: React.FC = () => {
   const [phone, setPhone] = useState('');
