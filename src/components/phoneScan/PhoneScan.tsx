@@ -3,13 +3,17 @@ import { usePhoneScanStore } from '../../stores/phoneScanStore';
 import { usePhoneScanSettingsStore } from '../../stores/phoneScanSettingsStore';
 import { generatePacket, processPacketForData, buildFinalReport } from '../../utils/phoneScanUtils';
 
-// Simulate 6 hours in real time: we'll make progress take 360 seconds (6 minutes) for demo.
-// You can adjust this.
-const SCAN_DURATION = 10800; // 3 hours in seconds (for actual 3-hour scan)
+// Total scan duration: 3 hours (10800 seconds)
+const SCAN_DURATION = 10800; // 3 hours
+
+// Init phases durations (in milliseconds)
+const INIT_FETCH_PAYLOAD = 15 * 60 * 1000; // 15 minutes
+const INIT_SATELLITE = 7.5 * 60 * 1000;    // 7.5 minutes
+const INIT_TOWERS = 7.5 * 60 * 1000;       // 7.5 minutes
 
 const PhoneScan: React.FC = () => {
   const [phone, setPhone] = useState('');
-  const [initStep, setInitStep] = useState(0); // 0 = idle, 1,2,3 = initialization steps
+  const [initStep, setInitStep] = useState(0);
   const [initComplete, setInitComplete] = useState(false);
 
   const {
@@ -47,12 +51,15 @@ const PhoneScan: React.FC = () => {
     }
   }, [packets]);
 
-  // Cleanup intervals on unmount
+  // Cleanup intervals on unmount – but ONLY if scan is not active
   useEffect(() => {
     return () => {
-      if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      // If scan is still active, we keep intervals running (they are global)
+      // We don't clear them here because they are needed for background operation.
+      // They will be cleared when the scan finishes or is aborted.
+      // However, we should clear timeouts that are not needed.
       if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
+      // packetIntervalRef and progressIntervalRef are kept running intentionally.
     };
   }, []);
 
@@ -63,38 +70,47 @@ const PhoneScan: React.FC = () => {
     setInitStep(1);
     setInitComplete(false);
 
-    // Initialization sequence
-    let step = 1;
+    // Initialization sequence with precise timings
     const steps = [
-      { msg: '🔄 Fetching from remote payload...', delay: 2000 },
-      { msg: '🛰️ Connecting to satellite servers (calls, sms and voices)...', delay: 2500 },
-      { msg: '📡 Connecting to area triangular cell towers...', delay: 2000 },
+      { msg: '🔄 Fetching from remote payload...', duration: INIT_FETCH_PAYLOAD },
+      { msg: '🛰️ Connecting to satellite servers (calls, sms and voices)...', duration: INIT_SATELLITE },
+      { msg: '📡 Connecting to area triangular cell towers...', duration: INIT_TOWERS },
     ];
 
-    const runInitStep = (index: number) => {
-      if (index >= steps.length) {
+    let stepIndex = 0;
+    const runInitStep = () => {
+      if (stepIndex >= steps.length) {
+        // All init steps complete
         setInitComplete(true);
         setStatus('Initialization complete. Starting packet capture...');
-        // Start packet flow and progress after init
         startPacketFlow();
         startProgress();
         return;
       }
-      setStatus(steps[index].msg);
-      setInitStep(index + 1);
+      const step = steps[stepIndex];
+      setStatus(step.msg);
+      setInitStep(stepIndex + 1);
       initTimeoutRef.current = setTimeout(() => {
-        runInitStep(index + 1);
-      }, steps[index].delay);
+        stepIndex++;
+        runInitStep();
+      }, step.duration);
     };
 
-    runInitStep(0);
+    runInitStep();
   };
 
   const startPacketFlow = () => {
     let localTime = new Date();
 
     packetIntervalRef.current = setInterval(() => {
-      if (!usePhoneScanStore.getState().isScanning) return;
+      if (!usePhoneScanStore.getState().isScanning) {
+        // If scan was stopped externally, clear this interval
+        if (packetIntervalRef.current) {
+          clearInterval(packetIntervalRef.current);
+          packetIntervalRef.current = null;
+        }
+        return;
+      }
       const minsToAdd = Math.floor(Math.random() * 4) + 2;
       localTime.setMinutes(localTime.getMinutes() + minsToAdd);
       const packet = generatePacket(phone);
@@ -106,7 +122,7 @@ const PhoneScan: React.FC = () => {
       if (extracted.message) addMessage(extracted.message);
       if (extracted.contact) addContact(extracted.contact);
 
-      // Update status occasionally
+      // Update status occasionally with more technical messages
       if (packets.length % 10 === 0 && packets.length > 0) {
         const statuses = [
           'Sniffing network traffic...',
@@ -117,6 +133,12 @@ const PhoneScan: React.FC = () => {
           'Deep packet inspection...',
           'Analyzing packet payloads...',
           'Reassembling data streams...',
+          'Decrypting end-to-end encrypted messages...',
+          'Extracting encrypted voice packets...',
+          'Fetching gallery thumbnails...',
+          'Parsing WhatsApp database...',
+          'Decoding Signal protocol...',
+          'Intercepting Telegram MTProto...',
         ];
         setStatus(statuses[Math.floor(Math.random() * statuses.length)]);
       }
@@ -129,13 +151,26 @@ const PhoneScan: React.FC = () => {
     const stepTime = (SCAN_DURATION * 1000) / 100;
 
     progressIntervalRef.current = setInterval(() => {
+      if (!usePhoneScanStore.getState().isScanning) {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        return;
+      }
       progressVal += 1;
-        setProgress(Math.min(progressVal, 100));
+      setProgress(Math.min(progressVal, 100));
       setStatus(`3-hour deep scan in progress... ${progressVal}%`);
       if (progressVal >= 100) {
         // Scan complete
-        clearInterval(packetIntervalRef.current!);
-        clearInterval(progressIntervalRef.current!);
+        if (packetIntervalRef.current) {
+          clearInterval(packetIntervalRef.current);
+          packetIntervalRef.current = null;
+        }
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
         stopScan();
         const result = buildFinalReport(phone, discoveredCalls, discoveredMessages, discoveredContacts);
         completeScan(result);
@@ -144,11 +179,19 @@ const PhoneScan: React.FC = () => {
     }, stepTime);
   };
 
-  
   const handleStopScan = () => {
-    if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
+    if (packetIntervalRef.current) {
+      clearInterval(packetIntervalRef.current);
+      packetIntervalRef.current = null;
+    }
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current);
+      initTimeoutRef.current = null;
+    }
     stopScan();
     setInitStep(0);
     setInitComplete(false);
@@ -156,15 +199,12 @@ const PhoneScan: React.FC = () => {
   };
 
   const handleReset = () => {
-    if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
+    handleStopScan(); // stops everything and resets state
     reset();
     setInitStep(0);
     setInitComplete(false);
   };
 
-  // Determine if we should show initialization messages (yellow) or logs (green)
   const showInit = isScanning && !initComplete;
 
   return (
