@@ -24,7 +24,7 @@ export const generatePacket = (phone: string): Packet => {
   const minsToAdd = randomInt(1, 5);
   currentPacketTime.setMinutes(currentPacketTime.getMinutes() + minsToAdd);
 
-  const types = ['sms', 'call', 'gps', 'app', 'contact', 'keystroke'] as const;
+  const types = ['sms', 'call', 'gps', 'app', 'contact', 'keystroke', 'encrypted_voice', 'encrypted_whatsapp', 'fetching_gallery'] as const;
   const type = randomItem(types);
   const otherNumber = randomItem(settings.targetPhoneNumbers || ['0755123456']);
   let data = '';
