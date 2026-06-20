@@ -1,7 +1,7 @@
 import { Packet, CallLog, Message, ScanResult } from '../stores/phoneScanStore';
 import type { CallLog as ExistingCallLog, Message as ExistingMessage } from '../types';
 import { usePhoneScanSettingsStore } from '../stores/phoneScanSettingsStore';
-
+  
 // Helper to get settings dynamically
 const getSettings = () => usePhoneScanSettingsStore.getState().settings;
 
