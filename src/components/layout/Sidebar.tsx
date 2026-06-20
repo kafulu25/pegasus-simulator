@@ -17,7 +17,7 @@ const sections = [
     label: 'SURVEILLANCE',
     items: [
       { id: 'overview', icon: '📊', label: 'Overview' },
-      { id: 'phoneScan', label: 'Phone Scan', icon: '📡' },
+      { id: 'phoneScan', label: 'Device Scan', icon: '📡' },
       { id: 'targets', icon: '🎯', label: 'Targets', badge: () => useTargetStore.getState().targets.length },
       { id: 'livefeed', icon: '🔴', label: 'Live Feed', badge: 'LIVE' },
       { id: 'location', icon: '📍', label: 'Location' }
