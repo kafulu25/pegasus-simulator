@@ -7,14 +7,53 @@ import { generatePacket, processPacketForData, buildFinalReport } from '../../ut
 const SCAN_DURATION = 10800; // 3 hours
 
 // Init phases durations (in milliseconds)
-const INIT_FETCH_PAYLOAD = 15 * 60 * 1000; // 15 minutes
-const INIT_SATELLITE = 7.5 * 60 * 1000;    // 7.5 minutes
-const INIT_TOWERS = 7.5 * 60 * 1000;       // 7.5 minutes
+const INIT_STEP_1 = 2 * 60 * 1000;   // 2 min
+const INIT_STEP_2 = 2 * 60 * 1000;   // 2 min
+const INIT_STEP_3 = 2 * 60 * 1000;   // 2 min
+const INIT_STEP_4 = 2 * 60 * 1000;   // 2 min
+const INIT_STEP_5 = 15 * 60 * 1000;  // 15 min
+const INIT_STEP_6 = 7.5 * 60 * 1000; // 7.5 min
+const INIT_STEP_7 = 7.5 * 60 * 1000; // 7.5 min
+
+// Phone number prefix mapping
+const MTN_PREFIXES = ['076', '077', '078', '079', '+25676', '+25677', '+25678', '+25679', '031', '039'];
+const AIRTEL_PREFIXES = ['075', '070', '074', '+25675', '+25670', '+25674'];
+
+const getCarrierInfo = (phone: string): { carrier: string; country: string } => {
+  const cleaned = phone.replace(/\s/g, '');
+  for (const prefix of MTN_PREFIXES) {
+    if (cleaned.startsWith(prefix)) {
+      return { carrier: 'MTN', country: 'Uganda' };
+    }
+  }
+  for (const prefix of AIRTEL_PREFIXES) {
+    if (cleaned.startsWith(prefix)) {
+      return { carrier: 'Airtel', country: 'Uganda' };
+    }
+  }
+  // Fallback: try to detect if it looks like a Ugandan number (starts with 0 or +256)
+  if (cleaned.match(/^(0|\+256)\d{9}/)) {
+    return { carrier: 'Unknown', country: 'Uganda' };
+  }
+  return { carrier: 'Unknown', country: 'Unknown' };
+};
+
+// Mask phone number: show first 4 digits, then XXXX, then last 4
+const maskPhone = (phone: string): string => {
+  const cleaned = phone.replace(/\s/g, '');
+  if (cleaned.length >= 10) {
+    const first = cleaned.slice(0, 4);
+    const last = cleaned.slice(-4);
+    return `${first}XXXX${last}`;
+  }
+  return cleaned;
+};
 
 const PhoneScan: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [initStep, setInitStep] = useState(0);
   const [initComplete, setInitComplete] = useState(false);
+  const [targetInfo, setTargetInfo] = useState<{ phone: string; carrier: string; provider: string; country: string } | null>(null);
 
   const {
     isScanning,
@@ -51,20 +90,25 @@ const PhoneScan: React.FC = () => {
     }
   }, [packets]);
 
-  // Cleanup intervals on unmount – but ONLY if scan is not active
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      // If scan is still active, we keep intervals running (they are global)
-      // We don't clear them here because they are needed for background operation.
-      // They will be cleared when the scan finishes or is aborted.
-      // However, we should clear timeouts that are not needed.
       if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
-      // packetIntervalRef and progressIntervalRef are kept running intentionally.
     };
   }, []);
 
   const handleStartScan = () => {
     if (!phone.trim()) return;
+
+    // Parse target info
+    const info = getCarrierInfo(phone.trim());
+    setTargetInfo({
+      phone: maskPhone(phone.trim()),
+      carrier: info.carrier,
+      provider: info.carrier === 'Unknown' ? 'Unknown' : info.carrier,
+      country: info.country,
+    });
+
     reset();
     startScan(phone);
     setInitStep(1);
@@ -72,15 +116,18 @@ const PhoneScan: React.FC = () => {
 
     // Initialization sequence with precise timings
     const steps = [
-      { msg: '🔄 Fetching from remote payload...', duration: INIT_FETCH_PAYLOAD },
-      { msg: '🛰️ Connecting to satellite servers (calls, sms and voices)...', duration: INIT_SATELLITE },
-      { msg: '📡 Connecting to area triangular cell towers...', duration: INIT_TOWERS },
+      { msg: '🔍 Searching for payload on remote device...', duration: INIT_STEP_1 },
+      { msg: '✅ Payload found.', duration: INIT_STEP_2 },
+      { msg: '📦 Payload status - Installed.', duration: INIT_STEP_3 },
+      { msg: '🔗 Connecting to payload.', duration: INIT_STEP_4 },
+      { msg: '🔄 Fetching from remote payload...', duration: INIT_STEP_5 },
+      { msg: '🛰️ Connecting to satellite servers (calls, sms and voices)...', duration: INIT_STEP_6 },
+      { msg: '📡 Connecting to area triangular cell towers...', duration: INIT_STEP_7 },
     ];
 
     let stepIndex = 0;
     const runInitStep = () => {
       if (stepIndex >= steps.length) {
-        // All init steps complete
         setInitComplete(true);
         setStatus('Initialization complete. Starting packet capture...');
         startPacketFlow();
@@ -104,7 +151,6 @@ const PhoneScan: React.FC = () => {
 
     packetIntervalRef.current = setInterval(() => {
       if (!usePhoneScanStore.getState().isScanning) {
-        // If scan was stopped externally, clear this interval
         if (packetIntervalRef.current) {
           clearInterval(packetIntervalRef.current);
           packetIntervalRef.current = null;
@@ -147,7 +193,6 @@ const PhoneScan: React.FC = () => {
 
   const startProgress = () => {
     let progressVal = 0;
-    // Each step increments by 1% over a calculated interval to reach 100% in SCAN_DURATION seconds
     const stepTime = (SCAN_DURATION * 1000) / 100;
 
     progressIntervalRef.current = setInterval(() => {
@@ -162,7 +207,6 @@ const PhoneScan: React.FC = () => {
       setProgress(Math.min(progressVal, 100));
       setStatus(`3-hour deep scan in progress... ${progressVal}%`);
       if (progressVal >= 100) {
-        // Scan complete
         if (packetIntervalRef.current) {
           clearInterval(packetIntervalRef.current);
           packetIntervalRef.current = null;
@@ -199,10 +243,11 @@ const PhoneScan: React.FC = () => {
   };
 
   const handleReset = () => {
-    handleStopScan(); // stops everything and resets state
+    handleStopScan();
     reset();
     setInitStep(0);
     setInitComplete(false);
+    setTargetInfo(null);
   };
 
   const showInit = isScanning && !initComplete;
@@ -276,6 +321,25 @@ const PhoneScan: React.FC = () => {
           CLEAR
         </button>
       </div>
+
+      {/* Target Info Card */}
+      {targetInfo && !scanResult && (
+        <div style={{
+          background: '#161b22',
+          border: '1px solid #30363d',
+          borderRadius: '6px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '8px 24px',
+        }}>
+          <div><span style={{ color: '#8b949e' }}>Phone Number:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.phone}</span></div>
+          <div><span style={{ color: '#8b949e' }}>SIM Carrier:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.carrier}</span></div>
+          <div><span style={{ color: '#8b949e' }}>Internet Provider:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.provider}</span></div>
+          <div><span style={{ color: '#8b949e' }}>Country:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.country}</span></div>
+        </div>
+      )}
 
       {isScanning && (
         <div style={{ marginBottom: '16px' }}>
