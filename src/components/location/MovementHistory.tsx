@@ -1,4 +1,3 @@
-// src/components/location/MovementHistory.tsx
 import React from 'react';
 import { useLocationStore } from '@/stores/locationStore';
 import { useTargetStore } from '@/stores/targetStore';
@@ -7,9 +6,11 @@ import './MovementHistory.css';
 
 export const MovementHistory: React.FC = () => {
   try {
-    const { getSelectedTarget } = useTargetStore();
-    const { getMovementHistory } = useLocationStore();
-    const selectedTarget = getSelectedTarget();
+    const targets = useTargetStore((state) => state.targets);
+    const selectedTargetId = useTargetStore((state) => state.selectedTargetId);
+    const getMovementHistory = useLocationStore((state) => state.getMovementHistory);
+
+    const selectedTarget = targets.find(t => t.id === selectedTargetId) || targets[0] || null;
     const history = selectedTarget ? getMovementHistory(selectedTarget.id, 24) : [];
 
     const displayHistory = history.length > 0 ? history : [
