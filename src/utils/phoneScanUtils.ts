@@ -52,6 +52,15 @@ export const generatePacket = (phone: string): Packet => {
     case 'keystroke':
       data = `Keystroke capture: "${randomItem(settings.messageTemplates || ['hello'])}"`;
       break;
+      case 'encrypted_voice':
+  data = `Encrypted voice packet intercepted (SRTP) – duration ${randomInt(10, 300)}s`;
+  break;
+case 'encrypted_whatsapp':
+  data = `WhatsApp E2E encrypted message: "${randomItem(settings.messageTemplates)}" (AES-256-GCM)`;
+  break;
+case 'fetching_gallery':
+  data = `Fetching gallery thumbnails – ${randomInt(50, 500)} images found`;
+  break;
   }
 
   const timestamp = currentPacketTime.toISOString().replace('T', ' ').slice(0, 19);
