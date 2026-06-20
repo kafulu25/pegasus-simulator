@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { DataEditorPanel } from './DataEditorPanel';
+import { PhoneScanSettings } from './PhoneScanSettings';
 import './SettingsPanel.css';
 
 export const SettingsPanel: React.FC = () => {
