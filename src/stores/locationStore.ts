@@ -1,3 +1,4 @@
+// src/stores/locationStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -22,7 +23,6 @@ interface LocationStore {
   clearLocations: () => void;
 }
 
-// Mock data for initial display
 const mockLocations: LocationPoint[] = [
   {
     id: 1,
@@ -64,6 +64,7 @@ const mockLocations: LocationPoint[] = [
     accuracy: 3,
     speed: 0,
   },
+  // Add more mock data for other targets if needed
 ];
 
 export const useLocationStore = create<LocationStore>()(
