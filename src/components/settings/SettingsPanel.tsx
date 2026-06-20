@@ -46,6 +46,11 @@ export const SettingsPanel: React.FC = () => {
           🎮  Data Review
         </button>
       </div>
+
+      {/* ... other settings sections ... */}
+<div className="settings-section">
+  <PhoneScanSettings />
+</div>
       
       <div className="scroll-content">
         {activeTab === 'opsec' && (
