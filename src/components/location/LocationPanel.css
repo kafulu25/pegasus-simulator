@@ -2,7 +2,47 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.panel-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-title .icon {
+  color: var(--accent);
+  font-size: 20px;
+}
+
+.panel-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.live-badge {
+  background: #ff0000;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 1px;
 }
 
 .scroll-content {
@@ -11,21 +51,73 @@
   padding: 20px 24px;
 }
 
-/* Reduced button size for Set Geofence */
-.btn-set-geofence {
-  padding: 6px 14px;
-  background: linear-gradient(135deg, #0d4f8c, var(--accent-dim));
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+.location-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.btn-set-geofence:hover {
-  opacity: 0.85;
-  transform: translateY(-1px);
+.location-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.location-item:last-child {
+  border-bottom: none;
+}
+
+.location-item:hover {
+  background: var(--bg-panel);
+}
+
+.location-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.location-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.location-coords {
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 4px;
+  font-family: monospace;
+}
+
+.location-divider {
+  margin-top: 10px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.location-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .live-badge {
+    align-self: flex-start;
+  }
 }
