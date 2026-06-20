@@ -1,4 +1,3 @@
-// src/components/location/LiveMap.tsx
 import React from 'react';
 import { useTargetStore } from '@/stores/targetStore';
 import { useLocationStore } from '@/stores/locationStore';
@@ -6,9 +5,12 @@ import './LiveMap.css';
 
 export const LiveMap: React.FC = () => {
   try {
-    const { getSelectedTarget } = useTargetStore();
-    const { getLatestLocation } = useLocationStore();
-    const selectedTarget = getSelectedTarget();
+    // Get targets and selected ID directly from store
+    const targets = useTargetStore((state) => state.targets);
+    const selectedTargetId = useTargetStore((state) => state.selectedTargetId);
+    const getLatestLocation = useLocationStore((state) => state.getLatestLocation);
+
+    const selectedTarget = targets.find(t => t.id === selectedTargetId) || targets[0] || null;
     const latestLocation = selectedTarget ? getLatestLocation(selectedTarget.id) : null;
 
     const targetName = selectedTarget?.name || 'Ahmad Karimi';
@@ -49,7 +51,6 @@ export const LiveMap: React.FC = () => {
     );
   } catch (error) {
     console.error('LiveMap error:', error);
-    // Fallback display
     return (
       <div className="card" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
         <div>📍 Live Map</div>
