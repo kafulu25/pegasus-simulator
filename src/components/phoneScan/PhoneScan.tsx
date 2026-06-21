@@ -3,15 +3,12 @@ import { usePhoneScanStore } from '../../stores/phoneScanStore';
 import { usePhoneScanSettingsStore } from '../../stores/phoneScanSettingsStore';
 import { generatePacket, processPacketForData, buildFinalReport } from '../../utils/phoneScanUtils';
 
-// ===== Module-level interval holders =====
-let packetInterval: NodeJS.Timeout | null = null;
-let progressInterval: NodeJS.Timeout | null = null;
+// Total scan duration: 3 hours (10800 seconds)
+const SCAN_DURATION = 10800;
 
-// ===== Constants =====
-const SCAN_DURATION = 10800; // 3 hours
-
+// Normal init total: 15 minutes
 const INIT_STEPS_NORMAL = [
-  '🔍 Searching for payload linked to your target device...',
+  '🔍 Searching for payload on remote device...',
   '✅ Payload found.',
   '📦 Payload status - Installed.',
   '🔗 Connecting to payload.',
@@ -21,8 +18,9 @@ const INIT_STEPS_NORMAL = [
 ];
 const NORMAL_STEP_DURATION_MS = Math.floor((15 * 60 * 1000) / INIT_STEPS_NORMAL.length);
 
+// Failure init total: 5 minutes
 const INIT_STEPS_FAILURE = [
-  '🔍 Searching for payload linked to your target device...',
+  '🔍 Searching for payload on remote device...',
   '❌ Payload not found.',
   '❌ Payload status - Not Installed.',
   '❌ Connection failed.',
@@ -272,9 +270,10 @@ const getCarrierInfo = (phone: string): { carrier: string; country: string } => 
 
 const PhoneScan: React.FC = () => {
   const [phone, setPhone] = useState('');
+  const [targetInfo, setTargetInfo] = useState<{ phone: string; carrier: string; provider: string; country: string } | null>(null);
   const [isFailureMode, setIsFailureMode] = useState(false);
 
-  // Store state
+  // Global store
   const {
     isScanning,
     progress,
@@ -284,8 +283,6 @@ const PhoneScan: React.FC = () => {
     discoveredMessages,
     discoveredContacts,
     scanResult,
-    targetInfo,
-    scanPhone,
     startScan,
     stopScan,
     addPacket,
@@ -296,26 +293,19 @@ const PhoneScan: React.FC = () => {
     setStatus,
     completeScan,
     reset,
-    setTargetInfo,
-    setScanPhone,
   } = usePhoneScanStore();
 
-  // UI internal state
+  // UI internal state (restored from store on mount)
   const [initComplete, setInitComplete] = useState(false);
   const [completedInitSteps, setCompletedInitSteps] = useState<string[]>([]);
 
   const settings = usePhoneScanSettingsStore((state) => state.settings);
   const simulateFailure = settings.simulateFailure || false;
 
+  const packetIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const packetsEndRef = useRef<HTMLDivElement>(null);
-
-  // Restore phone input from store on mount
-  useEffect(() => {
-    if (scanPhone) {
-      setPhone(scanPhone);
-    }
-  }, [scanPhone]);
 
   // Auto-scroll
   useEffect(() => {
@@ -324,7 +314,7 @@ const PhoneScan: React.FC = () => {
     }
   }, [packets]);
 
-  // On mount, if a scan is already running, restore UI state
+  // On mount, if a scan is already running, restore UI state from store
   useEffect(() => {
     if (isScanning) {
       if (packets.length > 0 || progress > 0) {
@@ -334,7 +324,7 @@ const PhoneScan: React.FC = () => {
     }
   }, [isScanning, packets, progress]);
 
-  // ===== START SCAN =====
+  // Start scan function
   const handleStartScan = () => {
     if (!phone.trim()) return;
 
@@ -345,7 +335,6 @@ const PhoneScan: React.FC = () => {
       provider: info.carrier === 'Unknown' ? 'Unknown' : info.carrier,
       country: info.country,
     });
-    setScanPhone(phone.trim());
 
     reset();
     startScan(phone);
@@ -387,14 +376,11 @@ const PhoneScan: React.FC = () => {
     runInitStep();
   };
 
-  // ===== START PACKET FLOW =====
   const startPacketFlow = () => {
-    if (packetInterval) return;
     let localTime = new Date();
-    packetInterval = setInterval(() => {
+    packetIntervalRef.current = setInterval(() => {
       if (!usePhoneScanStore.getState().isScanning) {
-        clearInterval(packetInterval!);
-        packetInterval = null;
+        if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
         return;
       }
       const minsToAdd = Math.floor(Math.random() * 4) + 2;
@@ -428,25 +414,20 @@ const PhoneScan: React.FC = () => {
     }, settings.packetIntervalMs);
   };
 
-  // ===== START PROGRESS =====
   const startProgress = () => {
-    if (progressInterval) return;
     let progressVal = progress;
     const stepTime = (SCAN_DURATION * 1000) / 100;
-    progressInterval = setInterval(() => {
+    progressIntervalRef.current = setInterval(() => {
       if (!usePhoneScanStore.getState().isScanning) {
-        clearInterval(progressInterval!);
-        progressInterval = null;
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         return;
       }
       progressVal += 1;
       setProgress(Math.min(progressVal, 100));
       setStatus(`it will take some hours, scan in progress... ${progressVal}%`);
       if (progressVal >= 100) {
-        if (packetInterval) clearInterval(packetInterval);
-        if (progressInterval) clearInterval(progressInterval);
-        packetInterval = null;
-        progressInterval = null;
+        if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         stopScan();
         const result = buildFinalReport(phone, discoveredCalls, discoveredMessages, discoveredContacts);
         completeScan(result);
@@ -455,12 +436,9 @@ const PhoneScan: React.FC = () => {
     }, stepTime);
   };
 
-  // ===== STOP SCAN =====
   const handleStopScan = () => {
-    if (packetInterval) clearInterval(packetInterval);
-    if (progressInterval) clearInterval(progressInterval);
-    packetInterval = null;
-    progressInterval = null;
+    if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
     stopScan();
     setInitComplete(false);
@@ -468,18 +446,19 @@ const PhoneScan: React.FC = () => {
     setStatus('Scan aborted');
   };
 
-  // ===== RESET =====
   const handleReset = () => {
     handleStopScan();
     reset();
     setInitComplete(false);
     setCompletedInitSteps([]);
+    setTargetInfo(null);
     setIsFailureMode(false);
   };
 
   const showInit = isScanning && !initComplete;
   const isFailureComplete = isFailureMode && scanResult && !isScanning;
 
+  // Spinner component (inline)
   const Spinner = () => (
     <span
       style={{
@@ -498,6 +477,7 @@ const PhoneScan: React.FC = () => {
 
   return (
     <div className="phone-scan-container" style={{ padding: '20px', background: '#0a0c10', color: '#e6edf3' }}>
+      {/* Keyframes for spinner animation */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -505,6 +485,7 @@ const PhoneScan: React.FC = () => {
         }
       `}</style>
 
+      {/* Controls */}
       <div className="scan-controls" style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <input
           type="text"
@@ -571,7 +552,7 @@ const PhoneScan: React.FC = () => {
         </button>
       </div>
 
-      {/* Target Info – now from store */}
+      {/* Target Info */}
       {targetInfo && !scanResult && (
         <div style={{
           background: 'linear-gradient(135deg, #0d1117, #161b22)',
@@ -777,3 +758,4 @@ const PhoneScan: React.FC = () => {
 };
 
 export default PhoneScan;
+
