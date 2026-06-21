@@ -130,7 +130,7 @@ const getCarrierInfo = (phone: string): { carrier: string; country: string } => 
 const PhoneScan: React.FC = () => {
   const [phoneInput, setPhoneInput] = useState('');
 
-  // Get store state and actions
+  // Store state & actions
   const {
     isScanning,
     progress,
@@ -187,12 +187,12 @@ const PhoneScan: React.FC = () => {
   // Cleanup intervals on unmount – but only if scan is not active
   useEffect(() => {
     return () => {
-      // If scan is still active, we keep intervals running (they are global)
-      // We don't clear them here because they are needed for background operation.
+      // We don't clear intervals here so the scan runs in the background.
       // They will be cleared when the scan finishes or is aborted.
     };
   }, []);
 
+  // ===== START SCAN =====
   const handleStartScan = () => {
     if (!phoneInput.trim()) return;
 
@@ -207,6 +207,7 @@ const PhoneScan: React.FC = () => {
     setTargetInfo(targetInfoData);
     setScanPhone(phoneInput.trim());
 
+    // Reset store state
     reset();
     startScan(phoneInput.trim());
     setInitComplete(false);
@@ -236,9 +237,8 @@ const PhoneScan: React.FC = () => {
       }
       const msg = steps[stepIndex];
       setStatus(msg);
-      setTimeout(() => {
-        setCompletedInitSteps([...completedInitSteps, msg]);
-      }, 100);
+      // Append to completed list immediately
+      setCompletedInitSteps([...completedInitSteps, msg]);
       initTimeoutRef.current = setTimeout(() => {
         stepIndex++;
         runInitStep();
@@ -247,6 +247,7 @@ const PhoneScan: React.FC = () => {
     runInitStep();
   };
 
+  // ===== START PACKET FLOW =====
   const startPacketFlow = () => {
     let localTime = new Date();
     packetIntervalRef.current = setInterval(() => {
@@ -285,6 +286,7 @@ const PhoneScan: React.FC = () => {
     }, settings.packetIntervalMs);
   };
 
+  // ===== START PROGRESS =====
   const startProgress = () => {
     let progressVal = progress;
     const stepTime = (SCAN_DURATION * 1000) / 100;
@@ -307,6 +309,7 @@ const PhoneScan: React.FC = () => {
     }, stepTime);
   };
 
+  // ===== STOP SCAN =====
   const handleStopScan = () => {
     if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
@@ -317,6 +320,7 @@ const PhoneScan: React.FC = () => {
     setStatus('Scan aborted');
   };
 
+  // ===== RESET =====
   const handleReset = () => {
     handleStopScan();
     reset();
@@ -400,7 +404,7 @@ const PhoneScan: React.FC = () => {
         </button>
       </div>
 
-      {/* ===== TARGET INFO CARD – FULLY RESTORED ===== */}
+      {/* Target Info Card */}
       {targetInfo && !scanResult && (
         <div style={{
           background: 'linear-gradient(135deg, #0d1117, #161b22)',
