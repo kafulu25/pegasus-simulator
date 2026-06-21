@@ -6,14 +6,18 @@ import { generatePacket, processPacketForData, buildFinalReport } from '../../ut
 // Total scan duration: 3 hours (10800 seconds)
 const SCAN_DURATION = 10800; // 3 hours
 
-// Init phases durations (in milliseconds)
-const INIT_STEP_1 = 2 * 60 * 1000;   // 2 min
-const INIT_STEP_2 = 2 * 60 * 1000;   // 2 min
-const INIT_STEP_3 = 2 * 60 * 1000;   // 2 min
-const INIT_STEP_4 = 2 * 60 * 1000;   // 2 min
-const INIT_STEP_5 = 15 * 60 * 1000;  // 15 min
-const INIT_STEP_6 = 7.5 * 60 * 1000; // 7.5 min
-const INIT_STEP_7 = 7.5 * 60 * 1000; // 7.5 min
+// Init phases total: 15 minutes (900 seconds)
+const INIT_TOTAL_MS = 15 * 60 * 1000;
+const INIT_STEPS = [
+  '🔍 Searching for payload on remote device...',
+  '✅ Payload found.',
+  '📦 Payload status - Installed.',
+  '🔗 Connecting to payload.',
+  '🔄 Fetching from remote payload...',
+  '🛰️ Connecting to satellite servers (calls, sms and voices)...',
+  '📡 Connecting to area triangular cell towers...',
+];
+const STEP_DURATION_MS = Math.floor(INIT_TOTAL_MS / INIT_STEPS.length); // ~128.57s each
 
 // Phone number prefix mapping
 const MTN_PREFIXES = ['076', '077', '078', '079', '+25676', '+25677', '+25678', '+25679', '031', '039'];
@@ -31,28 +35,17 @@ const getCarrierInfo = (phone: string): { carrier: string; country: string } => 
       return { carrier: 'Airtel', country: 'Uganda' };
     }
   }
-  // Fallback: try to detect if it looks like a Ugandan number (starts with 0 or +256)
   if (cleaned.match(/^(0|\+256)\d{9}/)) {
     return { carrier: 'Unknown', country: 'Uganda' };
   }
   return { carrier: 'Unknown', country: 'Unknown' };
 };
 
-// Mask phone number: show first 4 digits, then XXXX, then last 4
-const maskPhone = (phone: string): string => {
-  const cleaned = phone.replace(/\s/g, '');
-  if (cleaned.length >= 10) {
-    const first = cleaned.slice(0, 4);
-    const last = cleaned.slice(-4);
-    return `${first}XXXX${last}`;
-  }
-  return cleaned;
-};
-
 const PhoneScan: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [initStep, setInitStep] = useState(0);
   const [initComplete, setInitComplete] = useState(false);
+  const [completedInitSteps, setCompletedInitSteps] = useState<string[]>([]);
   const [targetInfo, setTargetInfo] = useState<{ phone: string; carrier: string; provider: string; country: string } | null>(null);
 
   const {
@@ -103,7 +96,7 @@ const PhoneScan: React.FC = () => {
     // Parse target info
     const info = getCarrierInfo(phone.trim());
     setTargetInfo({
-      phone: maskPhone(phone.trim()),
+      phone: phone.trim(), // display full number
       carrier: info.carrier,
       provider: info.carrier === 'Unknown' ? 'Unknown' : info.carrier,
       country: info.country,
@@ -111,36 +104,30 @@ const PhoneScan: React.FC = () => {
 
     reset();
     startScan(phone);
-    setInitStep(1);
+    setInitStep(0);
     setInitComplete(false);
-
-    // Initialization sequence with precise timings
-    const steps = [
-      { msg: '🔍 Searching for payload on remote device...', duration: INIT_STEP_1 },
-      { msg: '✅ Payload found.', duration: INIT_STEP_2 },
-      { msg: '📦 Payload status - Installed.', duration: INIT_STEP_3 },
-      { msg: '🔗 Connecting to payload.', duration: INIT_STEP_4 },
-      { msg: '🔄 Fetching from remote payload...', duration: INIT_STEP_5 },
-      { msg: '🛰️ Connecting to satellite servers (calls, sms and voices)...', duration: INIT_STEP_6 },
-      { msg: '📡 Connecting to area triangular cell towers...', duration: INIT_STEP_7 },
-    ];
+    setCompletedInitSteps([]);
 
     let stepIndex = 0;
     const runInitStep = () => {
-      if (stepIndex >= steps.length) {
+      if (stepIndex >= INIT_STEPS.length) {
         setInitComplete(true);
         setStatus('Initialization complete. Starting packet capture...');
         startPacketFlow();
         startProgress();
         return;
       }
-      const step = steps[stepIndex];
-      setStatus(step.msg);
+      const msg = INIT_STEPS[stepIndex];
+      setStatus(msg);
       setInitStep(stepIndex + 1);
+      // add to completed list after a short delay to show it as completed
+      setTimeout(() => {
+        setCompletedInitSteps(prev => [...prev, msg]);
+      }, 100);
       initTimeoutRef.current = setTimeout(() => {
         stepIndex++;
         runInitStep();
-      }, step.duration);
+      }, STEP_DURATION_MS);
     };
 
     runInitStep();
@@ -239,6 +226,7 @@ const PhoneScan: React.FC = () => {
     stopScan();
     setInitStep(0);
     setInitComplete(false);
+    setCompletedInitSteps([]);
     setStatus('Scan aborted');
   };
 
@@ -247,6 +235,7 @@ const PhoneScan: React.FC = () => {
     reset();
     setInitStep(0);
     setInitComplete(false);
+    setCompletedInitSteps([]);
     setTargetInfo(null);
   };
 
@@ -322,22 +311,47 @@ const PhoneScan: React.FC = () => {
         </button>
       </div>
 
-      {/* Target Info Card */}
+      {/* Target Info Card - Styled beautifully */}
       {targetInfo && !scanResult && (
         <div style={{
-          background: '#161b22',
+          background: 'linear-gradient(135deg, #0d1117, #161b22)',
           border: '1px solid #30363d',
-          borderRadius: '6px',
-          padding: '12px 16px',
+          borderRadius: '8px',
+          padding: '16px 20px',
           marginBottom: '16px',
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '8px 24px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         }}>
-          <div><span style={{ color: '#8b949e' }}>Phone Number:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.phone}</span></div>
-          <div><span style={{ color: '#8b949e' }}>SIM Carrier:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.carrier}</span></div>
-          <div><span style={{ color: '#8b949e' }}>Internet Provider:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.provider}</span></div>
-          <div><span style={{ color: '#8b949e' }}>Country:</span> <span style={{ color: '#e6edf3' }}>{targetInfo.country}</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>📞</span>
+            <div>
+              <div style={{ fontSize: '11px', color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone Number</div>
+              <div style={{ fontSize: '15px', fontWeight: '500', color: '#e6edf3' }}>{targetInfo.phone}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>📶</span>
+            <div>
+              <div style={{ fontSize: '11px', color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SIM Carrier</div>
+              <div style={{ fontSize: '15px', fontWeight: '500', color: targetInfo.carrier === 'MTN' ? '#4ae04a' : targetInfo.carrier === 'Airtel' ? '#ffcc44' : '#8b949e' }}>{targetInfo.carrier}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>🌐</span>
+            <div>
+              <div style={{ fontSize: '11px', color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Internet Provider</div>
+              <div style={{ fontSize: '15px', fontWeight: '500', color: '#e6edf3' }}>{targetInfo.provider}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>📍</span>
+            <div>
+              <div style={{ fontSize: '11px', color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Country</div>
+              <div style={{ fontSize: '15px', fontWeight: '500', color: '#e6edf3' }}>{targetInfo.country}</div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -369,11 +383,26 @@ const PhoneScan: React.FC = () => {
         {!isScanning && packets.length === 0 && (
           <div style={{ color: '#8b949e' }}>Awaiting scan initiation...</div>
         )}
-        {showInit && (
-          <div style={{ color: '#f0e68c', whiteSpace: 'pre-wrap' }}>
-            {statusText}
+
+        {/* Display initialization steps that have completed */}
+        {completedInitSteps.length > 0 && (
+          <div style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #30363d' }}>
+            {completedInitSteps.map((msg, idx) => (
+              <div key={idx} style={{ color: '#00ff00', padding: '2px 0' }}>
+                ✅ {msg}
+              </div>
+            ))}
           </div>
         )}
+
+        {/* Show current init step if still in progress */}
+        {showInit && (
+          <div style={{ color: '#f0e68c', padding: '2px 0' }}>
+            ⏳ {statusText}
+          </div>
+        )}
+
+        {/* Show green packet logs after init complete */}
         {initComplete && packets.map((p, idx) => (
           <div key={idx} style={{ color: '#00ff00', borderBottom: '1px solid rgba(0,255,0,0.05)', padding: '2px 0', display: 'flex', flexWrap: 'wrap' }}>
             <span style={{ color: '#33ff33', marginRight: '12px' }}>{p.timestamp}</span>
