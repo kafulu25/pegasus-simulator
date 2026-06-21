@@ -66,3 +66,39 @@
 .nav-item .badge.green {
   background: var(--green-dim);
 }
+/* Sidebar.css */
+
+/* Existing .badge styles (if any) */
+.badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* Green oval badge for LIVE */
+.badge.green {
+  background: #00c853;          /* vibrant green */
+  color: #fff;
+  border-radius: 20px;          /* oval shape */
+  padding: 2px 12px;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 12px rgba(0, 200, 83, 0.35);
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* Pulsing animation for the LIVE badge */
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
