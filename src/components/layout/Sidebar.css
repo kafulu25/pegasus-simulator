@@ -80,17 +80,16 @@
 
 /* Green oval badge for LIVE */
 .badge.green {
-  background: #00c853;          /* vibrant green */
+  background: #00c853;
   color: #fff;
-  border-radius: 20px;          /* oval shape */
+  border-radius: 20px;
   padding: 2px 12px;
   font-weight: 600;
   font-size: 9px;
   letter-spacing: 0.5px;
-  box-shadow: 0 0 12px rgba(0, 200, 83, 0.35);
-  animation: pulse-green 2s ease-in-out infinite;
-}
+  box-shadow: 0 0 6px rgba(0, 200, 83, 0.3);
 
+}
 /* Pulsing animation for the LIVE badge */
 @keyframes pulse-green {
   0%, 100% {
