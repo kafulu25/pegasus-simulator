@@ -634,7 +634,7 @@ const PhoneScan: React.FC = () => {
             <div style={{ fontSize: '12px', color: '#ff8888', textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>
               <strong>Technical Reasons:</strong><br />
               • Target device may have patched the vulnerability.<br />
-              • Network firewall is blocking the payload.<br />
+              • Network firewall is blocking the payload.<br />  
               • Payload signature was detected and removed.<br />
               • Device OS version is incompatible.<br />
               <br />
