@@ -77,15 +77,27 @@
   text-align: center;
 }
 
-/* ===== Green Badge (for LIVE) ===== */
+/* ===== Green Badge (for LIVE) – Animated ===== */
 .nav-item .badge.green {
-  background: #00c853;          /* solid green */
+  background: #00c853;
   color: #fff;
-  padding: 2px 14px;            /* a bit more horizontal padding for the word "LIVE" */
+  padding: 2px 14px;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  box-shadow: 0 0 8px rgba(0, 200, 83, 0.2); /* subtle glow – optional */
+  box-shadow: 0 0 8px rgba(0, 200, 83, 0.2);
+  /* ✨ Animation ✨ */
+  animation: pulse-green 2s ease-in-out infinite;
 }
 
-/* No pulse animation – solid green only */
+/* Pulsing animation */
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
