@@ -35,6 +35,13 @@ interface PhoneScanStore {
   initComplete: boolean;
   completedInitSteps: string[];
   isFailureMode: boolean;
+
+  targetInfo: { phone: string; carrier: string; provider: string; country: string } | null;
+  scanPhone: string;
+  setTargetInfo: (info: { phone: string; carrier: string; provider: string; country: string } | null) => void;
+  setScanPhone: (phone: string) => void;
+
+  
   // Actions
   startScan: (phone: string) => void;
   stopScan: () => void;
