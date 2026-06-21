@@ -8,7 +8,7 @@ const SCAN_DURATION = 10800;
 
 // Normal init total: 15 minutes
 const INIT_STEPS_NORMAL = [
-  '🔍 Searching for payload on remote device...',
+  '🔍 Searching for payload linked to target device...',
   '✅ Payload found.',
   '📦 Payload status - Installed.',
   '🔗 Connecting to payload.',
@@ -20,7 +20,7 @@ const NORMAL_STEP_DURATION_MS = Math.floor((15 * 60 * 1000) / INIT_STEPS_NORMAL.
 
 // Failure init total: 5 minutes
 const INIT_STEPS_FAILURE = [
-  '🔍 Searching for payload on remote device...',
+  '🔍 Searching for payload linked to target device...',
   '❌ Payload not found.',
   '❌ Payload status - Not Installed.',
   '❌ Connection failed.',
