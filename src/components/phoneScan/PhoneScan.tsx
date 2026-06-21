@@ -6,9 +6,8 @@ import { generatePacket, processPacketForData, buildFinalReport } from '../../ut
 // Total scan duration: 3 hours (10800 seconds)
 const SCAN_DURATION = 10800; // 3 hours
 
-// Init phases total: 15 minutes (900 seconds)
-const INIT_TOTAL_MS = 15 * 60 * 1000;
-const INIT_STEPS = [
+// Normal init total: 15 minutes
+const INIT_STEPS_NORMAL = [
   '🔍 Searching for payload on remote device...',
   '✅ Payload found.',
   '📦 Payload status - Installed.',
@@ -17,28 +16,67 @@ const INIT_STEPS = [
   '🛰️ Connecting to satellite servers (calls, sms and voices)...',
   '📡 Connecting to area triangular cell towers...',
 ];
-const STEP_DURATION_MS = Math.floor(INIT_TOTAL_MS / INIT_STEPS.length); // ~128.57s each
+const NORMAL_STEP_DURATION_MS = Math.floor((15 * 60 * 1000) / INIT_STEPS_NORMAL.length);
+
+// Failure init total: 5 minutes
+const INIT_STEPS_FAILURE = [
+  '🔍 Searching for payload on remote device...',
+  '❌ Payload not found.',
+  '❌ Payload status - Not Installed.',
+  '❌ Connection failed.',
+];
+const FAILURE_STEP_DURATION_MS = Math.floor((5 * 60 * 1000) / INIT_STEPS_FAILURE.length);
 
 // Phone number prefix mapping
 const MTN_PREFIXES = ['076', '077', '078', '079', '+25676', '+25677', '+25678', '+25679', '031', '039'];
 const AIRTEL_PREFIXES = ['075', '070', '074', '+25675', '+25670', '+25674'];
 
+// Country code mapping (expand as needed)
+const COUNTRY_MAP: Record<string, string> = {
+  '+256': 'Uganda',
+  '+1': 'USA',
+  '+44': 'UK',
+  '+91': 'India',
+  '+61': 'Australia',
+  '+81': 'Japan',
+  '+86': 'China',
+  '+49': 'Germany',
+  '+33': 'France',
+  '+39': 'Italy',
+  '+55': 'Brazil',
+  '+7': 'Russia',
+  '+82': 'South Korea',
+  '+31': 'Netherlands',
+  '+46': 'Sweden',
+  '+47': 'Norway',
+  '+45': 'Denmark',
+  '+358': 'Finland',
+};
+
 const getCarrierInfo = (phone: string): { carrier: string; country: string } => {
   const cleaned = phone.replace(/\s/g, '');
-  for (const prefix of MTN_PREFIXES) {
-    if (cleaned.startsWith(prefix)) {
-      return { carrier: 'MTN', country: 'Uganda' };
+  // Check country code
+  let country = 'Unknown';
+  for (const [code, name] of Object.entries(COUNTRY_MAP)) {
+    if (cleaned.startsWith(code)) {
+      country = name;
+      break;
     }
   }
-  for (const prefix of AIRTEL_PREFIXES) {
-    if (cleaned.startsWith(prefix)) {
-      return { carrier: 'Airtel', country: 'Uganda' };
+  // Carrier detection (only for Ugandan numbers)
+  if (country === 'Uganda') {
+    for (const prefix of MTN_PREFIXES) {
+      if (cleaned.startsWith(prefix)) {
+        return { carrier: 'MTN', country };
+      }
+    }
+    for (const prefix of AIRTEL_PREFIXES) {
+      if (cleaned.startsWith(prefix)) {
+        return { carrier: 'Airtel', country };
+      }
     }
   }
-  if (cleaned.match(/^(0|\+256)\d{9}/)) {
-    return { carrier: 'Unknown', country: 'Uganda' };
-  }
-  return { carrier: 'Unknown', country: 'Unknown' };
+  return { carrier: 'Unknown', country };
 };
 
 const PhoneScan: React.FC = () => {
@@ -47,6 +85,7 @@ const PhoneScan: React.FC = () => {
   const [initComplete, setInitComplete] = useState(false);
   const [completedInitSteps, setCompletedInitSteps] = useState<string[]>([]);
   const [targetInfo, setTargetInfo] = useState<{ phone: string; carrier: string; provider: string; country: string } | null>(null);
+  const [isFailureMode, setIsFailureMode] = useState(false);
 
   const {
     isScanning,
@@ -70,6 +109,7 @@ const PhoneScan: React.FC = () => {
   } = usePhoneScanStore();
 
   const settings = usePhoneScanSettingsStore((state) => state.settings);
+  const simulateFailure = settings.simulateFailure;
 
   const packetIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -96,7 +136,7 @@ const PhoneScan: React.FC = () => {
     // Parse target info
     const info = getCarrierInfo(phone.trim());
     setTargetInfo({
-      phone: phone.trim(), // display full number
+      phone: phone.trim(),
       carrier: info.carrier,
       provider: info.carrier === 'Unknown' ? 'Unknown' : info.carrier,
       country: info.country,
@@ -108,26 +148,45 @@ const PhoneScan: React.FC = () => {
     setInitComplete(false);
     setCompletedInitSteps([]);
 
+    // Determine if failure mode
+    const failure = simulateFailure;
+    setIsFailureMode(failure);
+    const steps = failure ? INIT_STEPS_FAILURE : INIT_STEPS_NORMAL;
+    const stepDuration = failure ? FAILURE_STEP_DURATION_MS : NORMAL_STEP_DURATION_MS;
+
     let stepIndex = 0;
     const runInitStep = () => {
-      if (stepIndex >= INIT_STEPS.length) {
+      if (stepIndex >= steps.length) {
         setInitComplete(true);
-        setStatus('Initialization complete. Starting packet capture...');
-        startPacketFlow();
-        startProgress();
+        if (failure) {
+          setStatus('Scan failed – payload not reachable.');
+          // Stop scan and show failure report
+          stopScan();
+          // Build a failure report (we can use the buildFinalReport with empty data or create a custom one)
+          const result = buildFinalReport(phone, [], [], new Set());
+          // Override with failure details
+          result.phoneNumber = phone;
+          // We'll add a custom failure message
+          completeScan(result);
+          // We'll show a failure message in the UI
+          setStatus('❌ Connection failed. Payload not installed on target device.');
+        } else {
+          setStatus('Initialization complete. Starting packet capture...');
+          startPacketFlow();
+          startProgress();
+        }
         return;
       }
-      const msg = INIT_STEPS[stepIndex];
+      const msg = steps[stepIndex];
       setStatus(msg);
       setInitStep(stepIndex + 1);
-      // add to completed list after a short delay to show it as completed
       setTimeout(() => {
         setCompletedInitSteps(prev => [...prev, msg]);
       }, 100);
       initTimeoutRef.current = setTimeout(() => {
         stepIndex++;
         runInitStep();
-      }, STEP_DURATION_MS);
+      }, stepDuration);
     };
 
     runInitStep();
@@ -237,9 +296,13 @@ const PhoneScan: React.FC = () => {
     setInitComplete(false);
     setCompletedInitSteps([]);
     setTargetInfo(null);
+    setIsFailureMode(false);
   };
 
   const showInit = isScanning && !initComplete;
+
+  // Determine if we are in failure mode and scan is complete
+  const isFailureComplete = isFailureMode && scanResult && !isScanning;
 
   return (
     <div className="phone-scan-container" style={{ padding: '20px', background: '#0a0c10', color: '#e6edf3' }}>
@@ -248,7 +311,7 @@ const PhoneScan: React.FC = () => {
           type="text"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          placeholder="Enter Ugandan phone (e.g., 0755123456)"
+          placeholder="Enter phone number (e.g., 0755123456 or +256755123456)"
           disabled={isScanning}
           style={{
             flex: 1,
@@ -311,7 +374,7 @@ const PhoneScan: React.FC = () => {
         </button>
       </div>
 
-      {/* Target Info Card - Styled beautifully */}
+      {/* Target Info Card */}
       {targetInfo && !scanResult && (
         <div style={{
           background: 'linear-gradient(135deg, #0d1117, #161b22)',
@@ -335,7 +398,11 @@ const PhoneScan: React.FC = () => {
             <span style={{ fontSize: '18px' }}>📶</span>
             <div>
               <div style={{ fontSize: '11px', color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SIM Carrier</div>
-              <div style={{ fontSize: '15px', fontWeight: '500', color: targetInfo.carrier === 'MTN' ? '#4ae04a' : targetInfo.carrier === 'Airtel' ? '#ffcc44' : '#8b949e' }}>{targetInfo.carrier}</div>
+              <div style={{
+                fontSize: '15px',
+                fontWeight: '500',
+                color: targetInfo.carrier === 'MTN' ? '#f0e68c' : targetInfo.carrier === 'Airtel' ? '#ff4444' : '#8b949e'
+              }}>{targetInfo.carrier}</div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -367,43 +434,52 @@ const PhoneScan: React.FC = () => {
         </div>
       )}
 
+      {/* Static Initialization Steps List */}
+      {completedInitSteps.length > 0 && (
+        <div style={{
+          background: 'rgba(16, 16, 24, 0.9)',
+          border: '1px solid #30363d',
+          borderRadius: '6px',
+          padding: '8px 12px',
+          marginBottom: '12px',
+          maxHeight: '100px',
+          overflowY: 'auto',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+        }}>
+          {completedInitSteps.map((msg, idx) => (
+            <div key={idx} style={{ color: '#f0e68c', padding: '2px 0' }}>
+              {msg}
+            </div>
+          ))}
+          {showInit && (
+            <div style={{ color: '#f0e68c', padding: '2px 0' }}>
+              ⏳ {statusText}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Packet Console with increased height */}
       <div
         className="packet-view"
         style={{
           border: '1px solid #30363d',
           borderRadius: '6px',
           padding: '12px',
-          height: '300px',
+          height: '400px',
           overflowY: 'auto',
           background: '#0a0c10',
           fontFamily: 'monospace',
           fontSize: '12px',
         }}
       >
-        {!isScanning && packets.length === 0 && (
+        {!isScanning && packets.length === 0 && !scanResult && (
           <div style={{ color: '#8b949e' }}>Awaiting scan initiation...</div>
         )}
 
-        {/* Display initialization steps that have completed */}
-        {completedInitSteps.length > 0 && (
-          <div style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #30363d' }}>
-            {completedInitSteps.map((msg, idx) => (
-              <div key={idx} style={{ color: '#00ff00', padding: '2px 0' }}>
-                ✅ {msg}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Show current init step if still in progress */}
-        {showInit && (
-          <div style={{ color: '#f0e68c', padding: '2px 0' }}>
-            ⏳ {statusText}
-          </div>
-        )}
-
-        {/* Show green packet logs after init complete */}
-        {initComplete && packets.map((p, idx) => (
+        {/* Show green packet logs after init complete (and only if not failure) */}
+        {initComplete && !isFailureMode && packets.map((p, idx) => (
           <div key={idx} style={{ color: '#00ff00', borderBottom: '1px solid rgba(0,255,0,0.05)', padding: '2px 0', display: 'flex', flexWrap: 'wrap' }}>
             <span style={{ color: '#33ff33', marginRight: '12px' }}>{p.timestamp}</span>
             <span style={{ color: '#66ff66', marginRight: '8px' }}>[{p.type.toUpperCase()}]</span>
@@ -412,9 +488,33 @@ const PhoneScan: React.FC = () => {
           </div>
         ))}
         <div ref={packetsEndRef} />
+
+        {/* Failure complete message */}
+        {isFailureComplete && (
+          <div style={{ color: '#ff4444', padding: '16px', textAlign: 'center' }}>
+            <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>❌ CONNECTION FAILED</div>
+            <div style={{ fontSize: '14px', marginBottom: '12px' }}>
+              Payload not installed on target device. Unable to establish connection.
+            </div>
+            <div style={{ fontSize: '12px', color: '#ff8888', textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>
+              <strong>Technical Reasons:</strong><br />
+              • Target device may have patched the vulnerability.<br />
+              • Network firewall is blocking the payload.<br />
+              • Payload signature was detected and removed.<br />
+              • Device OS version is incompatible.<br />
+              <br />
+              <strong>Suggested Actions:</strong><br />
+              1. Rebuild the payload with new evasion techniques.<br />
+              2. Use a different infection vector (e.g., SMS, WhatsApp).<br />
+              3. Re‑deploy the payload to the target remote device.<br />
+              4. Consider using a zero‑day exploit for better success rate.
+            </div>
+          </div>
+        )}
       </div>
 
-      {scanResult && (
+      {/* Scan Report for success or failure */}
+      {scanResult && !isFailureMode && (
         <div style={{ marginTop: '24px', borderTop: '1px solid #30363d', paddingTop: '20px' }}>
           <h3 style={{ color: '#0193c6' }}>📡 SCAN REPORT – {scanResult.phoneNumber}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
