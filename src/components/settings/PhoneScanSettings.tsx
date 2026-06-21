@@ -168,6 +168,32 @@ export const PhoneScanSettings: React.FC = () => {
         </p>
       </div>
 
+      {/* ✅ NEW: Failure Simulation Toggle */}
+      <div style={{ 
+        marginBottom: '16px',
+        padding: '12px 16px',
+        background: 'rgba(255, 68, 68, 0.05)',
+        border: '1px solid rgba(255, 68, 68, 0.2)',
+        borderRadius: '6px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: '#e6edf3', fontSize: '14px', fontWeight: '500' }}>⚠️ Simulate Payload Failure</div>
+            <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px' }}>
+              When ON, the scan will simulate a failed connection (payload not found).
+            </div>
+          </div>
+          <label className="toggle-switch" style={{ flexShrink: 0, marginLeft: '16px' }}>
+            <input
+              type="checkbox"
+              checked={settings.simulateFailure || false}
+              onChange={(e) => handleChange('simulateFailure', e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
       <div style={{ borderTop: '1px solid #30363d', paddingTop: '12px', marginTop: '8px' }}>
         <p style={{ fontSize: '11px', color: '#8b949e' }}>
           These settings affect future Device Scans. Changes will be persisted automatically.
