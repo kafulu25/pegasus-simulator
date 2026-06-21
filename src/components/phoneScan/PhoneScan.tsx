@@ -3,12 +3,15 @@ import { usePhoneScanStore } from '../../stores/phoneScanStore';
 import { usePhoneScanSettingsStore } from '../../stores/phoneScanSettingsStore';
 import { generatePacket, processPacketForData, buildFinalReport } from '../../utils/phoneScanUtils';
 
-// Total scan duration: 3 hours (10800 seconds)
-const SCAN_DURATION = 10800;
+// ===== Module-level interval holders (persist across mounts) =====
+let packetInterval: NodeJS.Timeout | null = null;
+let progressInterval: NodeJS.Timeout | null = null;
 
-// Normal init total: 15 minutes
+// ===== Constants =====
+const SCAN_DURATION = 10800; // 3 hours
+
 const INIT_STEPS_NORMAL = [
-  '🔍 Searching for payload on remote device...',
+  '🔍 Searching for payload linked to your target device...',
   '✅ Payload found.',
   '📦 Payload status - Installed.',
   '🔗 Connecting to payload.',
@@ -18,199 +21,53 @@ const INIT_STEPS_NORMAL = [
 ];
 const NORMAL_STEP_DURATION_MS = Math.floor((15 * 60 * 1000) / INIT_STEPS_NORMAL.length);
 
-// Failure init total: 5 minutes
 const INIT_STEPS_FAILURE = [
-  '🔍 Searching for payload on remote device...',
+  '🔍 Searching for payload linked to your target device...',
   '❌ Payload not found.',
   '❌ Payload status - Not Installed.',
   '❌ Connection failed.',
 ];
 const FAILURE_STEP_DURATION_MS = Math.floor((5 * 60 * 1000) / INIT_STEPS_FAILURE.length);
 
-// ===== Enhanced Country Mapping =====
+// ===== Carrier detection (unchanged) =====
 const COUNTRY_MAP: Record<string, string> = {
-  // Africa
-  '+256': 'Uganda',
-  '+254': 'Kenya',
-  '+255': 'Tanzania',
-  '+250': 'Rwanda',
-  '+257': 'Burundi',
-  '+258': 'Mozambique',
-  '+260': 'Zambia',
-  '+261': 'Madagascar',
-  '+263': 'Zimbabwe',
-  '+264': 'Namibia',
-  '+265': 'Malawi',
-  '+266': 'Lesotho',
-  '+267': 'Botswana',
-  '+268': 'Eswatini',
-  '+269': 'Comoros',
-  '+27': 'South Africa',
-  '+211': 'South Sudan',
-  '+212': 'Morocco',
-  '+213': 'Algeria',
-  '+216': 'Tunisia',
-  '+218': 'Libya',
-  '+220': 'Gambia',
-  '+221': 'Senegal',
-  '+222': 'Mauritania',
-  '+223': 'Mali',
-  '+224': 'Guinea',
-  '+225': "Côte d'Ivoire",
-  '+226': 'Burkina Faso',
-  '+227': 'Niger',
-  '+228': 'Togo',
-  '+229': 'Benin',
-  '+230': 'Mauritius',
-  '+231': 'Liberia',
-  '+232': 'Sierra Leone',
-  '+233': 'Ghana',
-  '+234': 'Nigeria',
-  '+235': 'Chad',
-  '+236': 'Central African Republic',
-  '+237': 'Cameroon',
-  '+238': 'Cape Verde',
-  '+239': 'São Tomé and Príncipe',
-  '+240': 'Equatorial Guinea',
-  '+241': 'Gabon',
-  '+242': 'Congo',
-  '+243': 'DR Congo',
-  '+244': 'Angola',
-  '+245': 'Guinea-Bissau',
-  '+248': 'Seychelles',
-  '+249': 'Sudan',
-  '+251': 'Ethiopia',
-  '+252': 'Somalia',
-  '+253': 'Djibouti',
-  '+290': 'Saint Helena',
-  '+291': 'Eritrea',
-  '+297': 'Aruba',
-  '+298': 'Faroe Islands',
-  '+299': 'Greenland',
-  // Americas
-  '+1': 'USA/Canada',
-  '+52': 'Mexico',
-  '+53': 'Cuba',
-  '+54': 'Argentina',
-  '+55': 'Brazil',
-  '+56': 'Chile',
-  '+57': 'Colombia',
-  '+58': 'Venezuela',
-  '+591': 'Bolivia',
-  '+592': 'Guyana',
-  '+593': 'Ecuador',
-  '+595': 'Paraguay',
-  '+596': 'Martinique',
-  '+597': 'Suriname',
-  '+598': 'Uruguay',
-  '+599': 'Curaçao',
-  '+501': 'Belize',
-  '+502': 'Guatemala',
-  '+503': 'El Salvador',
-  '+504': 'Honduras',
-  '+505': 'Nicaragua',
-  '+506': 'Costa Rica',
-  '+507': 'Panama',
-  '+509': 'Haiti',
-  '+51': 'Peru',
-  // Europe
-  '+30': 'Greece',
-  '+31': 'Netherlands',
-  '+32': 'Belgium',
-  '+33': 'France',
-  '+34': 'Spain',
-  '+36': 'Hungary',
-  '+39': 'Italy',
-  '+40': 'Romania',
-  '+41': 'Switzerland',
-  '+43': 'Austria',
-  '+44': 'UK',
-  '+45': 'Denmark',
-  '+46': 'Sweden',
-  '+47': 'Norway',
-  '+48': 'Poland',
-  '+49': 'Germany',
-  '+350': 'Gibraltar',
-  '+351': 'Portugal',
-  '+352': 'Luxembourg',
-  '+353': 'Ireland',
-  '+354': 'Iceland',
-  '+355': 'Albania',
-  '+356': 'Malta',
-  '+357': 'Cyprus',
-  '+358': 'Finland',
-  '+359': 'Bulgaria',
-  '+370': 'Lithuania',
-  '+371': 'Latvia',
-  '+372': 'Estonia',
-  '+373': 'Moldova',
-  '+374': 'Armenia',
-  '+375': 'Belarus',
-  '+376': 'Andorra',
-  '+377': 'Monaco',
-  '+378': 'San Marino',
-  '+379': 'Vatican',
-  '+380': 'Ukraine',
-  '+381': 'Serbia',
-  '+382': 'Montenegro',
-  '+383': 'Kosovo',
-  '+385': 'Croatia',
-  '+386': 'Slovenia',
-  '+387': 'Bosnia',
-  '+389': 'North Macedonia',
-  '+420': 'Czech Republic',
-  '+421': 'Slovakia',
-  '+423': 'Liechtenstein',
-  '+500': 'Falkland Islands',
-  // Asia
-  '+60': 'Malaysia',
-  '+61': 'Australia',
-  '+62': 'Indonesia',
-  '+63': 'Philippines',
-  '+64': 'New Zealand',
-  '+65': 'Singapore',
-  '+66': 'Thailand',
-  '+81': 'Japan',
-  '+82': 'South Korea',
-  '+84': 'Vietnam',
-  '+86': 'China',
-  '+90': 'Turkey',
-  '+91': 'India',
-  '+92': 'Pakistan',
-  '+93': 'Afghanistan',
-  '+94': 'Sri Lanka',
-  '+95': 'Myanmar',
-  '+98': 'Iran',
-  '+850': 'North Korea',
-  '+852': 'Hong Kong',
-  '+853': 'Macau',
-  '+855': 'Cambodia',
-  '+856': 'Laos',
-  '+880': 'Bangladesh',
-  '+886': 'Taiwan',
-  '+960': 'Maldives',
-  '+961': 'Lebanon',
-  '+962': 'Jordan',
-  '+963': 'Syria',
-  '+964': 'Iraq',
-  '+965': 'Kuwait',
-  '+966': 'Saudi Arabia',
-  '+967': 'Yemen',
-  '+968': 'Oman',
-  '+970': 'Palestine',
-  '+971': 'UAE',
-  '+972': 'Israel',
-  '+973': 'Bahrain',
-  '+974': 'Qatar',
-  '+975': 'Bhutan',
-  '+976': 'Mongolia',
-  '+977': 'Nepal',
-  '+992': 'Tajikistan',
-  '+993': 'Turkmenistan',
-  '+994': 'Azerbaijan',
-  '+995': 'Georgia',
-  '+996': 'Kyrgyzstan',
-  '+998': 'Uzbekistan',
+  '+256': 'Uganda', '+254': 'Kenya', '+255': 'Tanzania', '+250': 'Rwanda', '+257': 'Burundi',
+  '+258': 'Mozambique', '+260': 'Zambia', '+261': 'Madagascar', '+263': 'Zimbabwe', '+264': 'Namibia',
+  '+265': 'Malawi', '+266': 'Lesotho', '+267': 'Botswana', '+268': 'Eswatini', '+269': 'Comoros',
+  '+27': 'South Africa', '+211': 'South Sudan', '+212': 'Morocco', '+213': 'Algeria', '+216': 'Tunisia',
+  '+218': 'Libya', '+220': 'Gambia', '+221': 'Senegal', '+222': 'Mauritania', '+223': 'Mali',
+  '+224': 'Guinea', '+225': "Côte d'Ivoire", '+226': 'Burkina Faso', '+227': 'Niger', '+228': 'Togo',
+  '+229': 'Benin', '+230': 'Mauritius', '+231': 'Liberia', '+232': 'Sierra Leone', '+233': 'Ghana',
+  '+234': 'Nigeria', '+235': 'Chad', '+236': 'Central African Republic', '+237': 'Cameroon',
+  '+238': 'Cape Verde', '+239': 'São Tomé and Príncipe', '+240': 'Equatorial Guinea', '+241': 'Gabon',
+  '+242': 'Congo', '+243': 'DR Congo', '+244': 'Angola', '+245': 'Guinea-Bissau', '+248': 'Seychelles',
+  '+249': 'Sudan', '+251': 'Ethiopia', '+252': 'Somalia', '+253': 'Djibouti', '+290': 'Saint Helena',
+  '+291': 'Eritrea', '+297': 'Aruba', '+298': 'Faroe Islands', '+299': 'Greenland',
+  '+1': 'USA/Canada', '+52': 'Mexico', '+53': 'Cuba', '+54': 'Argentina', '+55': 'Brazil',
+  '+56': 'Chile', '+57': 'Colombia', '+58': 'Venezuela', '+591': 'Bolivia', '+592': 'Guyana',
+  '+593': 'Ecuador', '+595': 'Paraguay', '+596': 'Martinique', '+597': 'Suriname', '+598': 'Uruguay',
+  '+599': 'Curaçao', '+501': 'Belize', '+502': 'Guatemala', '+503': 'El Salvador', '+504': 'Honduras',
+  '+505': 'Nicaragua', '+506': 'Costa Rica', '+507': 'Panama', '+509': 'Haiti', '+51': 'Peru',
+  '+30': 'Greece', '+31': 'Netherlands', '+32': 'Belgium', '+33': 'France', '+34': 'Spain',
+  '+36': 'Hungary', '+39': 'Italy', '+40': 'Romania', '+41': 'Switzerland', '+43': 'Austria',
+  '+44': 'UK', '+45': 'Denmark', '+46': 'Sweden', '+47': 'Norway', '+48': 'Poland', '+49': 'Germany',
+  '+350': 'Gibraltar', '+351': 'Portugal', '+352': 'Luxembourg', '+353': 'Ireland', '+354': 'Iceland',
+  '+355': 'Albania', '+356': 'Malta', '+357': 'Cyprus', '+358': 'Finland', '+359': 'Bulgaria',
+  '+370': 'Lithuania', '+371': 'Latvia', '+372': 'Estonia', '+373': 'Moldova', '+374': 'Armenia',
+  '+375': 'Belarus', '+376': 'Andorra', '+377': 'Monaco', '+378': 'San Marino', '+379': 'Vatican',
+  '+380': 'Ukraine', '+381': 'Serbia', '+382': 'Montenegro', '+383': 'Kosovo', '+385': 'Croatia',
+  '+386': 'Slovenia', '+387': 'Bosnia', '+389': 'North Macedonia', '+420': 'Czech Republic',
+  '+421': 'Slovakia', '+423': 'Liechtenstein', '+500': 'Falkland Islands',
+  '+60': 'Malaysia', '+61': 'Australia', '+62': 'Indonesia', '+63': 'Philippines', '+64': 'New Zealand',
+  '+65': 'Singapore', '+66': 'Thailand', '+81': 'Japan', '+82': 'South Korea', '+84': 'Vietnam',
+  '+86': 'China', '+90': 'Turkey', '+91': 'India', '+92': 'Pakistan', '+93': 'Afghanistan',
+  '+94': 'Sri Lanka', '+95': 'Myanmar', '+98': 'Iran', '+850': 'North Korea', '+852': 'Hong Kong',
+  '+853': 'Macau', '+855': 'Cambodia', '+856': 'Laos', '+880': 'Bangladesh', '+886': 'Taiwan',
+  '+960': 'Maldives', '+961': 'Lebanon', '+962': 'Jordan', '+963': 'Syria', '+964': 'Iraq',
+  '+965': 'Kuwait', '+966': 'Saudi Arabia', '+967': 'Yemen', '+968': 'Oman', '+970': 'Palestine',
+  '+971': 'UAE', '+972': 'Israel', '+973': 'Bahrain', '+974': 'Qatar', '+975': 'Bhutan',
+  '+976': 'Mongolia', '+977': 'Nepal', '+992': 'Tajikistan', '+993': 'Turkmenistan',
+  '+994': 'Azerbaijan', '+995': 'Georgia', '+996': 'Kyrgyzstan', '+998': 'Uzbekistan',
 };
 
 const MTN_PREFIXES = ['076', '077', '078', '079', '+25676', '+25677', '+25678', '+25679', '031', '039'];
@@ -268,12 +125,11 @@ const getCarrierInfo = (phone: string): { carrier: string; country: string } => 
   return { carrier, country };
 };
 
+// ===== Main Component =====
 const PhoneScan: React.FC = () => {
-  const [phone, setPhone] = useState('');
-  const [targetInfo, setTargetInfo] = useState<{ phone: string; carrier: string; provider: string; country: string } | null>(null);
-  const [isFailureMode, setIsFailureMode] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
 
-  // Global store
+  // Get store state
   const {
     isScanning,
     progress,
@@ -283,6 +139,11 @@ const PhoneScan: React.FC = () => {
     discoveredMessages,
     discoveredContacts,
     scanResult,
+    scanPhone,
+    targetInfo,
+    initComplete,
+    completedInitSteps,
+    isFailureMode,
     startScan,
     stopScan,
     addPacket,
@@ -293,19 +154,25 @@ const PhoneScan: React.FC = () => {
     setStatus,
     completeScan,
     reset,
+    setTargetInfo,
+    setScanPhone,
+    setInitComplete,
+    setCompletedInitSteps,
+    setIsFailureMode,
   } = usePhoneScanStore();
-
-  // UI internal state (restored from store on mount)
-  const [initComplete, setInitComplete] = useState(false);
-  const [completedInitSteps, setCompletedInitSteps] = useState<string[]>([]);
 
   const settings = usePhoneScanSettingsStore((state) => state.settings);
   const simulateFailure = settings.simulateFailure || false;
 
-  const packetIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const packetsEndRef = useRef<HTMLDivElement>(null);
+
+  // Restore phone input from store on mount
+  useEffect(() => {
+    if (scanPhone) {
+      setPhoneInput(scanPhone);
+    }
+  }, [scanPhone]);
 
   // Auto-scroll
   useEffect(() => {
@@ -314,30 +181,26 @@ const PhoneScan: React.FC = () => {
     }
   }, [packets]);
 
-  // On mount, if a scan is already running, restore UI state from store
-  useEffect(() => {
-    if (isScanning) {
-      if (packets.length > 0 || progress > 0) {
-        setInitComplete(true);
-        setCompletedInitSteps(INIT_STEPS_NORMAL.map(s => s));
-      }
-    }
-  }, [isScanning, packets, progress]);
+  // No cleanup on unmount – intervals continue running
 
-  // Start scan function
+  // ===== START SCAN =====
   const handleStartScan = () => {
-    if (!phone.trim()) return;
+    if (!phoneInput.trim()) return;
 
-    const info = getCarrierInfo(phone.trim());
-    setTargetInfo({
-      phone: phone.trim(),
+    const info = getCarrierInfo(phoneInput.trim());
+    const targetInfoData = {
+      phone: phoneInput.trim(),
       carrier: info.carrier,
       provider: info.carrier === 'Unknown' ? 'Unknown' : info.carrier,
       country: info.country,
-    });
+    };
+    
+    // Persist to store
+    setTargetInfo(targetInfoData);
+    setScanPhone(phoneInput.trim());
 
     reset();
-    startScan(phone);
+    startScan(phoneInput.trim());
     setInitComplete(false);
     setCompletedInitSteps([]);
 
@@ -353,7 +216,7 @@ const PhoneScan: React.FC = () => {
         if (failure) {
           setStatus('Scan failed – payload not reachable.');
           stopScan();
-          const result = buildFinalReport(phone, [], [], new Set());
+          const result = buildFinalReport(phoneInput.trim(), [], [], new Set());
           completeScan(result);
           setStatus('❌ Connection failed. Payload not installed on target device.');
         } else {
@@ -366,7 +229,7 @@ const PhoneScan: React.FC = () => {
       const msg = steps[stepIndex];
       setStatus(msg);
       setTimeout(() => {
-        setCompletedInitSteps(prev => [...prev, msg]);
+        setCompletedInitSteps([...completedInitSteps, msg]);
       }, 100);
       initTimeoutRef.current = setTimeout(() => {
         stepIndex++;
@@ -376,19 +239,22 @@ const PhoneScan: React.FC = () => {
     runInitStep();
   };
 
+  // ===== START PACKET FLOW (module-level interval) =====
   const startPacketFlow = () => {
+    if (packetInterval) return;
     let localTime = new Date();
-    packetIntervalRef.current = setInterval(() => {
+    packetInterval = setInterval(() => {
       if (!usePhoneScanStore.getState().isScanning) {
-        if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
+        clearInterval(packetInterval!);
+        packetInterval = null;
         return;
       }
       const minsToAdd = Math.floor(Math.random() * 4) + 2;
       localTime.setMinutes(localTime.getMinutes() + minsToAdd);
-      const packet = generatePacket(phone);
+      const packet = generatePacket(scanPhone);
       packet.timestamp = localTime.toISOString().replace('T', ' ').slice(0, 19);
       addPacket(packet);
-      const extracted = processPacketForData(packet, phone);
+      const extracted = processPacketForData(packet, scanPhone);
       if (extracted.call) addCall(extracted.call);
       if (extracted.message) addMessage(extracted.message);
       if (extracted.contact) addContact(extracted.contact);
@@ -414,38 +280,58 @@ const PhoneScan: React.FC = () => {
     }, settings.packetIntervalMs);
   };
 
+  // ===== START PROGRESS =====
   const startProgress = () => {
+    if (progressInterval) return;
     let progressVal = progress;
     const stepTime = (SCAN_DURATION * 1000) / 100;
-    progressIntervalRef.current = setInterval(() => {
+    progressInterval = setInterval(() => {
       if (!usePhoneScanStore.getState().isScanning) {
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        clearInterval(progressInterval!);
+        progressInterval = null;
         return;
       }
       progressVal += 1;
       setProgress(Math.min(progressVal, 100));
       setStatus(`it will take some hours, scan in progress... ${progressVal}%`);
       if (progressVal >= 100) {
-        if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        if (packetInterval) {
+          clearInterval(packetInterval);
+          packetInterval = null;
+        }
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
         stopScan();
-        const result = buildFinalReport(phone, discoveredCalls, discoveredMessages, discoveredContacts);
+        const result = buildFinalReport(scanPhone, discoveredCalls, discoveredMessages, discoveredContacts);
         completeScan(result);
         setStatus('Scan complete – report ready');
       }
     }, stepTime);
   };
 
+  // ===== STOP SCAN =====
   const handleStopScan = () => {
-    if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
+    if (packetInterval) {
+      clearInterval(packetInterval);
+      packetInterval = null;
+    }
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    if (initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current);
+      initTimeoutRef.current = null;
+    }
     stopScan();
     setInitComplete(false);
     setCompletedInitSteps([]);
     setStatus('Scan aborted');
   };
 
+  // ===== RESET =====
   const handleReset = () => {
     handleStopScan();
     reset();
@@ -453,12 +339,13 @@ const PhoneScan: React.FC = () => {
     setCompletedInitSteps([]);
     setTargetInfo(null);
     setIsFailureMode(false);
+    setScanPhone('');
+    setPhoneInput('');
   };
 
   const showInit = isScanning && !initComplete;
   const isFailureComplete = isFailureMode && scanResult && !isScanning;
 
-  // Spinner component (inline)
   const Spinner = () => (
     <span
       style={{
@@ -477,7 +364,6 @@ const PhoneScan: React.FC = () => {
 
   return (
     <div className="phone-scan-container" style={{ padding: '20px', background: '#0a0c10', color: '#e6edf3' }}>
-      {/* Keyframes for spinner animation */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -485,12 +371,11 @@ const PhoneScan: React.FC = () => {
         }
       `}</style>
 
-      {/* Controls */}
       <div className="scan-controls" style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <input
           type="text"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={phoneInput}
+          onChange={(e) => setPhoneInput(e.target.value)}
           placeholder="Enter phone number"
           disabled={isScanning}
           style={{
@@ -552,7 +437,7 @@ const PhoneScan: React.FC = () => {
         </button>
       </div>
 
-      {/* Target Info */}
+      {/* ===== TARGET INFO CARD – DISPLAYS PERSISTENT DATA ===== */}
       {targetInfo && !scanResult && (
         <div style={{
           background: 'linear-gradient(135deg, #0d1117, #161b22)',
@@ -600,7 +485,6 @@ const PhoneScan: React.FC = () => {
         </div>
       )}
 
-      {/* Progress Bar */}
       {isScanning && (
         <div style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#8b949e' }}>
@@ -616,7 +500,6 @@ const PhoneScan: React.FC = () => {
         </div>
       )}
 
-      {/* Static Init Steps */}
       {completedInitSteps.length > 0 && (
         <div style={{
           background: 'rgba(16, 16, 24, 0.9)',
@@ -641,7 +524,6 @@ const PhoneScan: React.FC = () => {
         </div>
       )}
 
-      {/* Packet Console */}
       <div
         className="packet-view"
         style={{
@@ -688,7 +570,6 @@ const PhoneScan: React.FC = () => {
         )}
       </div>
 
-      {/* Success Report */}
       {scanResult && !isFailureMode && (
         <div style={{ marginTop: '24px', borderTop: '1px solid #30363d', paddingTop: '20px' }}>
           <h3 style={{ color: '#0193c6' }}>📡 SCAN REPORT – {scanResult.phoneNumber}</h3>
@@ -758,4 +639,3 @@ const PhoneScan: React.FC = () => {
 };
 
 export default PhoneScan;
-
