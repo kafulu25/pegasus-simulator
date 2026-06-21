@@ -56,7 +56,7 @@ const COUNTRY_MAP: Record<string, string> = {
   '+222': 'Mauritania',
   '+223': 'Mali',
   '+224': 'Guinea',
-  '+225': 'Côte d\'Ivoire',
+  '+225': "Côte d'Ivoire",
   '+226': 'Burkina Faso',
   '+227': 'Niger',
   '+228': 'Togo',
@@ -317,16 +317,9 @@ const PhoneScan: React.FC = () => {
   // On mount, if a scan is already running, restore UI state from store
   useEffect(() => {
     if (isScanning) {
-      // We need to know if init is complete and which steps were done.
-      // We'll store these in the store or derive from packets/progress.
-      // For simplicity, we'll assume if progress > 0, init is complete.
-      // But we need the init steps list. We'll re-create it from the current statusText.
-      // Better: store init steps in a separate store field.
-      // Since we don't have that, we'll just set initComplete to true if packets.length > 0.
       if (packets.length > 0 || progress > 0) {
         setInitComplete(true);
-        // We lost the completed steps list, but we can show a placeholder.
-        setCompletedInitSteps(INIT_STEPS_NORMAL.map(s => s)); // show all normal steps as completed
+        setCompletedInitSteps(INIT_STEPS_NORMAL.map(s => s));
       }
     }
   }, [isScanning, packets, progress]);
@@ -335,7 +328,6 @@ const PhoneScan: React.FC = () => {
   const handleStartScan = () => {
     if (!phone.trim()) return;
 
-    // Parse target info
     const info = getCarrierInfo(phone.trim());
     setTargetInfo({
       phone: phone.trim(),
@@ -423,7 +415,7 @@ const PhoneScan: React.FC = () => {
   };
 
   const startProgress = () => {
-    let progressVal = progress; // start from current progress
+    let progressVal = progress;
     const stepTime = (SCAN_DURATION * 1000) / 100;
     progressIntervalRef.current = setInterval(() => {
       if (!usePhoneScanStore.getState().isScanning) {
@@ -466,8 +458,33 @@ const PhoneScan: React.FC = () => {
   const showInit = isScanning && !initComplete;
   const isFailureComplete = isFailureMode && scanResult && !isScanning;
 
+  // Spinner component (inline)
+  const Spinner = () => (
+    <span
+      style={{
+        display: 'inline-block',
+        width: '16px',
+        height: '16px',
+        border: '2px solid #f0e68c',
+        borderTop: '2px solid transparent',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        marginRight: '8px',
+        flexShrink: 0,
+      }}
+    />
+  );
+
   return (
     <div className="phone-scan-container" style={{ padding: '20px', background: '#0a0c10', color: '#e6edf3' }}>
+      {/* Keyframes for spinner animation */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+
       {/* Controls */}
       <div className="scan-controls" style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <input
@@ -587,7 +604,10 @@ const PhoneScan: React.FC = () => {
       {isScanning && (
         <div style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#8b949e' }}>
-            <span style={{ color: showInit ? '#f0e68c' : '#0193c6' }}>{statusText}</span>
+            <span style={{ display: 'flex', alignItems: 'center', color: showInit ? '#f0e68c' : '#0193c6' }}>
+              {showInit && <Spinner />}
+              {statusText}
+            </span>
             <span>{progress}%</span>
           </div>
           <div style={{ width: '100%', height: '4px', background: '#161b22', borderRadius: '2px', overflow: 'hidden' }}>
@@ -613,7 +633,10 @@ const PhoneScan: React.FC = () => {
             <div key={idx} style={{ color: '#f0e68c', padding: '2px 0' }}>{msg}</div>
           ))}
           {showInit && (
-            <div style={{ color: '#f0e68c', padding: '2px 0' }}>⏳ {statusText}</div>
+            <div style={{ display: 'flex', alignItems: 'center', color: '#f0e68c', padding: '2px 0' }}>
+              <Spinner />
+              {statusText}
+            </div>
           )}
         </div>
       )}
