@@ -1,3 +1,4 @@
+// src/stores/phoneScanStore.ts
 import { create } from 'zustand';
 import type { CallLog, Message } from '../types';
 
@@ -5,7 +6,7 @@ export interface Packet {
   timestamp: string;
   data: string;
   base64: string;
-  type: 'sms' | 'call' | 'gps' | 'app' | 'contact' | 'keystroke';
+  type: 'sms' | 'call' | 'gps' | 'app' | 'contact' | 'keystroke' | 'encrypted_voice' | 'encrypted_whatsapp' | 'fetching_gallery';
 }
 
 export interface ScanResult {
@@ -20,6 +21,7 @@ export interface ScanResult {
 }
 
 interface PhoneScanStore {
+  // Core scan state
   isScanning: boolean;
   progress: number;
   statusText: string;
@@ -28,6 +30,12 @@ interface PhoneScanStore {
   discoveredMessages: Message[];
   discoveredContacts: Set<string>;
   scanResult: ScanResult | null;
+  // UI persistence fields
+  targetInfo: { phone: string; carrier: string; provider: string; country: string } | null;
+  initComplete: boolean;
+  completedInitSteps: string[];
+  isFailureMode: boolean;
+  // Actions
   startScan: (phone: string) => void;
   stopScan: () => void;
   addPacket: (packet: Packet) => void;
@@ -38,6 +46,10 @@ interface PhoneScanStore {
   setStatus: (text: string) => void;
   completeScan: (result: ScanResult) => void;
   reset: () => void;
+  setTargetInfo: (info: { phone: string; carrier: string; provider: string; country: string } | null) => void;
+  setInitComplete: (value: boolean) => void;
+  setCompletedInitSteps: (steps: string[]) => void;
+  setIsFailureMode: (value: boolean) => void;
 }
 
 export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
@@ -49,8 +61,12 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   discoveredMessages: [],
   discoveredContacts: new Set(),
   scanResult: null,
+  targetInfo: null,
+  initComplete: false,
+  completedInitSteps: [],
+  isFailureMode: false,
+
   startScan: (phone) => {
-    console.log('startScan called with phone:', phone);
     set({
       isScanning: true,
       progress: 0,
@@ -59,13 +75,10 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
       discoveredMessages: [],
       discoveredContacts: new Set(),
       scanResult: null,
-      statusText: 'Initializing wiretap...'
+      statusText: 'Initializing...',
     });
   },
-  stopScan: () => {
-    console.log('stopScan called');
-    set({ isScanning: false });
-  },
+  stopScan: () => set({ isScanning: false }),
   addPacket: (packet) => set((state) => ({ packets: [...state.packets, packet] })),
   addCall: (call) => set((state) => ({ discoveredCalls: [...state.discoveredCalls, call] })),
   addMessage: (msg) => set((state) => ({ discoveredMessages: [...state.discoveredMessages, msg] })),
@@ -76,21 +89,23 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   }),
   setProgress: (progress) => set({ progress }),
   setStatus: (statusText) => set({ statusText }),
-  completeScan: (result) => {
-    console.log('completeScan with result:', result);
-    set({ scanResult: result, isScanning: false, statusText: 'Scan complete' });
-  },
-  reset: () => {
-    console.log('reset called');
-    set({
-      isScanning: false,
-      progress: 0,
-      statusText: 'Idle',
-      packets: [],
-      discoveredCalls: [],
-      discoveredMessages: [],
-      discoveredContacts: new Set(),
-      scanResult: null,
-    });
-  },
+  completeScan: (result) => set({ scanResult: result, isScanning: false, statusText: 'Scan complete' }),
+  reset: () => set({
+    isScanning: false,
+    progress: 0,
+    statusText: 'Idle',
+    packets: [],
+    discoveredCalls: [],
+    discoveredMessages: [],
+    discoveredContacts: new Set(),
+    scanResult: null,
+    targetInfo: null,
+    initComplete: false,
+    completedInitSteps: [],
+    isFailureMode: false,
+  }),
+  setTargetInfo: (info) => set({ targetInfo: info }),
+  setInitComplete: (value) => set({ initComplete: value }),
+  setCompletedInitSteps: (steps) => set({ completedInitSteps: steps }),
+  setIsFailureMode: (value) => set({ isFailureMode: value }),
 }));
