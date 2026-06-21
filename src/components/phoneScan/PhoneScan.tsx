@@ -491,7 +491,7 @@ const PhoneScan: React.FC = () => {
           type="text"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          placeholder="Enter phone number (e.g., 0755123456 or +256755123456)"
+          placeholder="Enter phone number"
           disabled={isScanning}
           style={{
             flex: 1,
