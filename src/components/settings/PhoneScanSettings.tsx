@@ -178,9 +178,9 @@ export const PhoneScanSettings: React.FC = () => {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ color: '#e6edf3', fontSize: '14px', fontWeight: '500' }}>⚠️ Simulate Payload Failure</div>
+            <div style={{ color: '#e6edf3', fontSize: '14px', fontWeight: '500' }}>⚠️ Payload Status</div>
             <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px' }}>
-              When ON, the scan will simulate a failed connection (payload not found).
+              When ON, the scan will check whether payload is reachable or not.
             </div>
           </div>
           <label className="toggle-switch" style={{ flexShrink: 0, marginLeft: '16px' }}>
