@@ -5,9 +5,10 @@ interface PhoneScanSettings {
   targetPhoneNumbers: string[];
   appList: string[];
   messageTemplates: string[];
-  callDurationRange: [number, number]; // min, max seconds
+  callDurationRange: [number, number];
   coordinateRange: { latMin: number; latMax: number; lngMin: number; lngMax: number };
   packetIntervalMs: number;
+  simulateFailure: boolean; // ✅ ADD THIS LINE
 }
 
 interface PhoneScanSettingsStore {
@@ -21,8 +22,8 @@ const defaultSettings: PhoneScanSettings = {
   messageTemplates: ['Hello', 'Meeting at 5', 'On my way', 'Call me later', "I'm here", 'Please confirm', 'Can you talk?', 'On the phone now'],
   callDurationRange: [10, 300],
   coordinateRange: { latMin: 0.3, latMax: 0.35, lngMin: 32.5, lngMax: 32.65 },
-  packetIntervalMs: 500, // milliseconds between packets
-  simulateFailure: false, // <-- ADD THIS
+  packetIntervalMs: 500,
+  simulateFailure: false, // ✅ ADD THIS LINE
 };
 
 export const usePhoneScanSettingsStore = create<PhoneScanSettingsStore>()(
