@@ -545,7 +545,7 @@ const PhoneScan: React.FC = () => {
               <div style={{
                 fontSize: '15px',
                 fontWeight: '500',
-                color: targetInfo.carrier === 'MTN' ? '#f5f4ed' : targetInfo.carrier === 'Airtel' ? '#f5f4ed' : '#8b949e'
+                color: targetInfo.carrier === 'MTN' ? '#f0e68c' : targetInfo.carrier === 'Airtel' ? '#ff4444' : '#8b949e'
               }}>{targetInfo.carrier}</div>
             </div>
           </div>
