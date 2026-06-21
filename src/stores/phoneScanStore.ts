@@ -19,6 +19,13 @@ export interface ScanResult {
   installedApps: string[];
 }
 
+export interface TargetInfo {
+  phone: string;
+  carrier: string;
+  provider: string;
+  country: string;
+}
+
 interface PhoneScanStore {
   // Core scan state
   isScanning: boolean;
@@ -29,9 +36,14 @@ interface PhoneScanStore {
   discoveredMessages: Message[];
   discoveredContacts: Set<string>;
   scanResult: ScanResult | null;
-  // UI persistence
-  targetInfo: { phone: string; carrier: string; provider: string; country: string } | null;
+  
+  // UI persistence fields
   scanPhone: string;
+  targetInfo: TargetInfo | null;
+  initComplete: boolean;
+  completedInitSteps: string[];
+  isFailureMode: boolean;
+  
   // Actions
   startScan: (phone: string) => void;
   stopScan: () => void;
@@ -43,11 +55,17 @@ interface PhoneScanStore {
   setStatus: (text: string) => void;
   completeScan: (result: ScanResult) => void;
   reset: () => void;
-  setTargetInfo: (info: { phone: string; carrier: string; provider: string; country: string } | null) => void;
+  
+  // UI persistence actions
+  setTargetInfo: (info: TargetInfo | null) => void;
   setScanPhone: (phone: string) => void;
+  setInitComplete: (value: boolean) => void;
+  setCompletedInitSteps: (steps: string[]) => void;
+  setIsFailureMode: (value: boolean) => void;
 }
 
 export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
+  // Core state
   isScanning: false,
   progress: 0,
   statusText: 'Idle',
@@ -56,9 +74,15 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   discoveredMessages: [],
   discoveredContacts: new Set(),
   scanResult: null,
-  targetInfo: null,
+  
+  // UI persistence
   scanPhone: '',
+  targetInfo: null,
+  initComplete: false,
+  completedInitSteps: [],
+  isFailureMode: false,
 
+  // Core actions
   startScan: (phone) => {
     set({
       isScanning: true,
@@ -93,9 +117,17 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
     discoveredMessages: [],
     discoveredContacts: new Set(),
     scanResult: null,
-    targetInfo: null,
     scanPhone: '',
+    targetInfo: null,
+    initComplete: false,
+    completedInitSteps: [],
+    isFailureMode: false,
   }),
+
+  // UI persistence actions
   setTargetInfo: (info) => set({ targetInfo: info }),
   setScanPhone: (phone) => set({ scanPhone: phone }),
+  setInitComplete: (value) => set({ initComplete: value }),
+  setCompletedInitSteps: (steps) => set({ completedInitSteps: steps }),
+  setIsFailureMode: (value) => set({ isFailureMode: value }),
 }));
