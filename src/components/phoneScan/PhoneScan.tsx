@@ -3,10 +3,13 @@ import { usePhoneScanStore } from '../../stores/phoneScanStore';
 import { usePhoneScanSettingsStore } from '../../stores/phoneScanSettingsStore';
 import { generatePacket, processPacketForData, buildFinalReport } from '../../utils/phoneScanUtils';
 
-// Total scan duration: 3 hours (10800 seconds)
-const SCAN_DURATION = 10800;
+// ⚠️ FOR DEBUGGING: use 1 second per step instead of 15 min
+const NORMAL_STEP_DURATION_MS = 1000; // 1 second
+const FAILURE_STEP_DURATION_MS = 1000; // 1 second
+// After testing, change back to:
+// const NORMAL_STEP_DURATION_MS = Math.floor((15 * 60 * 1000) / 7);
+// const FAILURE_STEP_DURATION_MS = Math.floor((5 * 60 * 1000) / 4);
 
-// Normal init total: 15 minutes
 const INIT_STEPS_NORMAL = [
   '🔍 Searching for payload on remote device...',
   '✅ Payload found.',
@@ -16,20 +19,16 @@ const INIT_STEPS_NORMAL = [
   '🛰️ Connecting to satellite servers (calls, sms and voices)...',
   '📡 Connecting to area triangular cell towers...',
 ];
-const NORMAL_STEP_DURATION_MS = Math.floor((15 * 60 * 1000) / INIT_STEPS_NORMAL.length);
 
-// Failure init total: 5 minutes
 const INIT_STEPS_FAILURE = [
   '🔍 Searching for payload on remote device...',
   '❌ Payload not found.',
   '❌ Payload status - Not Installed.',
   '❌ Connection failed.',
 ];
-const FAILURE_STEP_DURATION_MS = Math.floor((5 * 60 * 1000) / INIT_STEPS_FAILURE.length);
 
-// ===== ENHANCED COUNTRY & CARRIER DETECTION =====
+// ===== Carrier detection (unchanged) =====
 const COUNTRY_MAP: Record<string, string> = {
-  // Africa
   '+256': 'Uganda', '+254': 'Kenya', '+255': 'Tanzania', '+250': 'Rwanda', '+257': 'Burundi',
   '+258': 'Mozambique', '+260': 'Zambia', '+261': 'Madagascar', '+263': 'Zimbabwe', '+264': 'Namibia',
   '+265': 'Malawi', '+266': 'Lesotho', '+267': 'Botswana', '+268': 'Eswatini', '+269': 'Comoros',
@@ -42,13 +41,11 @@ const COUNTRY_MAP: Record<string, string> = {
   '+242': 'Congo', '+243': 'DR Congo', '+244': 'Angola', '+245': 'Guinea-Bissau', '+248': 'Seychelles',
   '+249': 'Sudan', '+251': 'Ethiopia', '+252': 'Somalia', '+253': 'Djibouti', '+290': 'Saint Helena',
   '+291': 'Eritrea', '+297': 'Aruba', '+298': 'Faroe Islands', '+299': 'Greenland',
-  // Americas
   '+1': 'USA/Canada', '+52': 'Mexico', '+53': 'Cuba', '+54': 'Argentina', '+55': 'Brazil',
   '+56': 'Chile', '+57': 'Colombia', '+58': 'Venezuela', '+591': 'Bolivia', '+592': 'Guyana',
   '+593': 'Ecuador', '+595': 'Paraguay', '+596': 'Martinique', '+597': 'Suriname', '+598': 'Uruguay',
   '+599': 'Curaçao', '+501': 'Belize', '+502': 'Guatemala', '+503': 'El Salvador', '+504': 'Honduras',
   '+505': 'Nicaragua', '+506': 'Costa Rica', '+507': 'Panama', '+509': 'Haiti', '+51': 'Peru',
-  // Europe
   '+30': 'Greece', '+31': 'Netherlands', '+32': 'Belgium', '+33': 'France', '+34': 'Spain',
   '+36': 'Hungary', '+39': 'Italy', '+40': 'Romania', '+41': 'Switzerland', '+43': 'Austria',
   '+44': 'UK', '+45': 'Denmark', '+46': 'Sweden', '+47': 'Norway', '+48': 'Poland', '+49': 'Germany',
@@ -59,7 +56,6 @@ const COUNTRY_MAP: Record<string, string> = {
   '+380': 'Ukraine', '+381': 'Serbia', '+382': 'Montenegro', '+383': 'Kosovo', '+385': 'Croatia',
   '+386': 'Slovenia', '+387': 'Bosnia', '+389': 'North Macedonia', '+420': 'Czech Republic',
   '+421': 'Slovakia', '+423': 'Liechtenstein', '+500': 'Falkland Islands',
-  // Asia
   '+60': 'Malaysia', '+61': 'Australia', '+62': 'Indonesia', '+63': 'Philippines', '+64': 'New Zealand',
   '+65': 'Singapore', '+66': 'Thailand', '+81': 'Japan', '+82': 'South Korea', '+84': 'Vietnam',
   '+86': 'China', '+90': 'Turkey', '+91': 'India', '+92': 'Pakistan', '+93': 'Afghanistan',
@@ -127,10 +123,10 @@ const getCarrierInfo = (phone: string): { carrier: string; country: string } => 
   return { carrier, country };
 };
 
+// ===== Component =====
 const PhoneScan: React.FC = () => {
   const [phoneInput, setPhoneInput] = useState('');
 
-  // Store state & actions
   const {
     isScanning,
     progress,
@@ -170,147 +166,175 @@ const PhoneScan: React.FC = () => {
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const packetsEndRef = useRef<HTMLDivElement>(null);
 
-  // Restore phone input from store on mount
+  // Restore phone input from store
   useEffect(() => {
     if (scanPhone) {
       setPhoneInput(scanPhone);
+      console.log('📞 Restored scanPhone:', scanPhone);
     }
   }, [scanPhone]);
 
-  // Auto-scroll packet view
+  // Auto-scroll
   useEffect(() => {
     if (packetsEndRef.current) {
       packetsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [packets]);
 
-  // Cleanup intervals on unmount – but only if scan is not active
+  // Log store state on mount
+  useEffect(() => {
+    console.log('🔍 PhoneScan mounted, isScanning:', isScanning, 'initComplete:', initComplete, 'packets:', packets.length);
+  }, []);
+
+  // Cleanup – we don't clear intervals so background works
   useEffect(() => {
     return () => {
-      // We don't clear intervals here so the scan runs in the background.
-      // They will be cleared when the scan finishes or is aborted.
+      console.log('🔄 PhoneScan unmounting, scan keeps running');
     };
   }, []);
 
   // ===== START SCAN =====
   const handleStartScan = () => {
-    if (!phoneInput.trim()) return;
+    console.log('🚀 handleStartScan called with phone:', phoneInput);
+    if (!phoneInput.trim()) {
+      console.warn('⚠️ No phone number entered');
+      return;
+    }
 
-    // Parse carrier info
-    const info = getCarrierInfo(phoneInput.trim());
-    const targetInfoData = {
-      phone: phoneInput.trim(),
-      carrier: info.carrier,
-      provider: info.carrier === 'Unknown' ? 'Unknown' : info.carrier,
-      country: info.country,
-    };
-    setTargetInfo(targetInfoData);
-    setScanPhone(phoneInput.trim());
+    try {
+      const info = getCarrierInfo(phoneInput.trim());
+      const targetInfoData = {
+        phone: phoneInput.trim(),
+        carrier: info.carrier,
+        provider: info.carrier === 'Unknown' ? 'Unknown' : info.carrier,
+        country: info.country,
+      };
+      console.log('📇 Target info:', targetInfoData);
+      setTargetInfo(targetInfoData);
+      setScanPhone(phoneInput.trim());
 
-    // Reset store state
-    reset();
-    startScan(phoneInput.trim());
-    setInitComplete(false);
-    setCompletedInitSteps([]);
+      reset();
+      startScan(phoneInput.trim());
+      setInitComplete(false);
+      setCompletedInitSteps([]);
 
-    const failure = simulateFailure;
-    setIsFailureMode(failure);
-    const steps = failure ? INIT_STEPS_FAILURE : INIT_STEPS_NORMAL;
-    const stepDuration = failure ? FAILURE_STEP_DURATION_MS : NORMAL_STEP_DURATION_MS;
+      const failure = simulateFailure;
+      setIsFailureMode(failure);
+      const steps = failure ? INIT_STEPS_FAILURE : INIT_STEPS_NORMAL;
+      const stepDuration = failure ? FAILURE_STEP_DURATION_MS : NORMAL_STEP_DURATION_MS;
 
-    let stepIndex = 0;
-    const runInitStep = () => {
-      if (stepIndex >= steps.length) {
-        setInitComplete(true);
-        if (failure) {
-          setStatus('Scan failed – payload not reachable.');
-          stopScan();
-          const result = buildFinalReport(phoneInput.trim(), [], [], new Set());
-          completeScan(result);
-          setStatus('❌ Connection failed. Payload not installed on target device.');
-        } else {
-          setStatus('Initialization complete. Starting packet capture...');
-          startPacketFlow();
-          startProgress();
+      console.log('📋 Init steps:', steps, 'stepDuration:', stepDuration);
+
+      let stepIndex = 0;
+      const runInitStep = () => {
+        console.log('🔁 runInitStep called, stepIndex:', stepIndex);
+        if (stepIndex >= steps.length) {
+          console.log('✅ Init complete!');
+          setInitComplete(true);
+          if (failure) {
+            setStatus('Scan failed – payload not reachable.');
+            stopScan();
+            const result = buildFinalReport(phoneInput.trim(), [], [], new Set());
+            completeScan(result);
+            setStatus('❌ Connection failed. Payload not installed on target device.');
+          } else {
+            setStatus('Initialization complete. Starting packet capture...');
+            startPacketFlow();
+            startProgress();
+          }
+          return;
         }
-        return;
-      }
-      const msg = steps[stepIndex];
-      setStatus(msg);
-      // Append to completed list immediately
-      setCompletedInitSteps([...completedInitSteps, msg]);
-      initTimeoutRef.current = setTimeout(() => {
-        stepIndex++;
-        runInitStep();
-      }, stepDuration);
-    };
-    runInitStep();
+        const msg = steps[stepIndex];
+        console.log('📢 Setting status:', msg);
+        setStatus(msg);
+        setCompletedInitSteps([...completedInitSteps, msg]);
+        initTimeoutRef.current = setTimeout(() => {
+          stepIndex++;
+          runInitStep();
+        }, stepDuration);
+      };
+
+      runInitStep();
+    } catch (error) {
+      console.error('❌ Error in handleStartScan:', error);
+    }
   };
 
-  // ===== START PACKET FLOW =====
+  // ===== PACKET FLOW =====
   const startPacketFlow = () => {
+    console.log('📦 Starting packet flow');
     let localTime = new Date();
     packetIntervalRef.current = setInterval(() => {
-      if (!usePhoneScanStore.getState().isScanning) {
-        if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
-        return;
+      try {
+        if (!usePhoneScanStore.getState().isScanning) {
+          if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
+          return;
+        }
+        const minsToAdd = Math.floor(Math.random() * 4) + 2;
+        localTime.setMinutes(localTime.getMinutes() + minsToAdd);
+        const packet = generatePacket(scanPhone);
+        packet.timestamp = localTime.toISOString().replace('T', ' ').slice(0, 19);
+        addPacket(packet);
+        const extracted = processPacketForData(packet, scanPhone);
+        if (extracted.call) addCall(extracted.call);
+        if (extracted.message) addMessage(extracted.message);
+        if (extracted.contact) addContact(extracted.contact);
+        if (packets.length % 10 === 0 && packets.length > 0) {
+          const statuses = [
+            'Sniffing network traffic...',
+            'Decrypting handshake...',
+            'Triangulating cell towers...',
+            'Extracting metadata...',
+            'Building packet timeline...',
+            'Deep packet inspection...',
+            'Analyzing packet payloads...',
+            'Reassembling data streams...',
+            'Decrypting end-to-end encrypted messages...',
+            'Extracting encrypted voice packets...',
+            'Fetching gallery thumbnails...',
+            'Parsing WhatsApp database...',
+            'Decoding Signal protocol...',
+            'Intercepting Telegram MTProto...',
+          ];
+          setStatus(statuses[Math.floor(Math.random() * statuses.length)]);
+        }
+      } catch (error) {
+        console.error('❌ Packet flow error:', error);
       }
-      const minsToAdd = Math.floor(Math.random() * 4) + 2;
-      localTime.setMinutes(localTime.getMinutes() + minsToAdd);
-      const packet = generatePacket(scanPhone);
-      packet.timestamp = localTime.toISOString().replace('T', ' ').slice(0, 19);
-      addPacket(packet);
-      const extracted = processPacketForData(packet, scanPhone);
-      if (extracted.call) addCall(extracted.call);
-      if (extracted.message) addMessage(extracted.message);
-      if (extracted.contact) addContact(extracted.contact);
-      if (packets.length % 10 === 0 && packets.length > 0) {
-        const statuses = [
-          'Sniffing network traffic...',
-          'Decrypting handshake...',
-          'Triangulating cell towers...',
-          'Extracting metadata...',
-          'Building packet timeline...',
-          'Deep packet inspection...',
-          'Analyzing packet payloads...',
-          'Reassembling data streams...',
-          'Decrypting end-to-end encrypted messages...',
-          'Extracting encrypted voice packets...',
-          'Fetching gallery thumbnails...',
-          'Parsing WhatsApp database...',
-          'Decoding Signal protocol...',
-          'Intercepting Telegram MTProto...',
-        ];
-        setStatus(statuses[Math.floor(Math.random() * statuses.length)]);
-      }
-    }, settings.packetIntervalMs);
+    }, settings.packetIntervalMs || 500);
   };
 
-  // ===== START PROGRESS =====
+  // ===== PROGRESS =====
   const startProgress = () => {
+    console.log('📊 Starting progress');
     let progressVal = progress;
-    const stepTime = (SCAN_DURATION * 1000) / 100;
+    const stepTime = 1000; // 1 second per percent for testing (originally 108 seconds)
     progressIntervalRef.current = setInterval(() => {
-      if (!usePhoneScanStore.getState().isScanning) {
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-        return;
-      }
-      progressVal += 1;
-      setProgress(Math.min(progressVal, 100));
-      setStatus(`3-hour deep scan in progress... ${progressVal}%`);
-      if (progressVal >= 100) {
-        if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-        stopScan();
-        const result = buildFinalReport(scanPhone, discoveredCalls, discoveredMessages, discoveredContacts);
-        completeScan(result);
-        setStatus('Scan complete – report ready');
+      try {
+        if (!usePhoneScanStore.getState().isScanning) {
+          if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+          return;
+        }
+        progressVal += 1;
+        setProgress(Math.min(progressVal, 100));
+        setStatus(`3-hour deep scan in progress... ${progressVal}%`);
+        if (progressVal >= 100) {
+          if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
+          if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+          stopScan();
+          const result = buildFinalReport(scanPhone, discoveredCalls, discoveredMessages, discoveredContacts);
+          completeScan(result);
+          setStatus('Scan complete – report ready');
+        }
+      } catch (error) {
+        console.error('❌ Progress error:', error);
       }
     }, stepTime);
   };
 
   // ===== STOP SCAN =====
   const handleStopScan = () => {
+    console.log('⏹️ Stopping scan');
     if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
@@ -322,6 +346,7 @@ const PhoneScan: React.FC = () => {
 
   // ===== RESET =====
   const handleReset = () => {
+    console.log('🔄 Resetting scan');
     handleStopScan();
     reset();
     setInitComplete(false);
@@ -334,6 +359,8 @@ const PhoneScan: React.FC = () => {
 
   const showInit = isScanning && !initComplete;
   const isFailureComplete = isFailureMode && scanResult && !isScanning;
+
+  console.log('🎨 Rendering, isScanning:', isScanning, 'initComplete:', initComplete, 'packets:', packets.length);
 
   return (
     <div className="phone-scan-container" style={{ padding: '20px', background: '#0a0c10', color: '#e6edf3' }}>
