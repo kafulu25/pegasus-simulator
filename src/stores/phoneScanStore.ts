@@ -1,4 +1,3 @@
-// src/stores/phoneScanStore.ts
 import { create } from 'zustand';
 import type { CallLog, Message } from '../types';
 
@@ -30,18 +29,9 @@ interface PhoneScanStore {
   discoveredMessages: Message[];
   discoveredContacts: Set<string>;
   scanResult: ScanResult | null;
-  // UI persistence fields
-  targetInfo: { phone: string; carrier: string; provider: string; country: string } | null;
-  initComplete: boolean;
-  completedInitSteps: string[];
-  isFailureMode: boolean;
-
+  // UI persistence
   targetInfo: { phone: string; carrier: string; provider: string; country: string } | null;
   scanPhone: string;
-  setTargetInfo: (info: { phone: string; carrier: string; provider: string; country: string } | null) => void;
-  setScanPhone: (phone: string) => void;
-
-  
   // Actions
   startScan: (phone: string) => void;
   stopScan: () => void;
@@ -54,9 +44,7 @@ interface PhoneScanStore {
   completeScan: (result: ScanResult) => void;
   reset: () => void;
   setTargetInfo: (info: { phone: string; carrier: string; provider: string; country: string } | null) => void;
-  setInitComplete: (value: boolean) => void;
-  setCompletedInitSteps: (steps: string[]) => void;
-  setIsFailureMode: (value: boolean) => void;
+  setScanPhone: (phone: string) => void;
 }
 
 export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
@@ -69,9 +57,7 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
   discoveredContacts: new Set(),
   scanResult: null,
   targetInfo: null,
-  initComplete: false,
-  completedInitSteps: [],
-  isFailureMode: false,
+  scanPhone: '',
 
   startScan: (phone) => {
     set({
@@ -83,6 +69,7 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
       discoveredContacts: new Set(),
       scanResult: null,
       statusText: 'Initializing...',
+      scanPhone: phone,
     });
   },
   stopScan: () => set({ isScanning: false }),
@@ -107,12 +94,8 @@ export const usePhoneScanStore = create<PhoneScanStore>((set, get) => ({
     discoveredContacts: new Set(),
     scanResult: null,
     targetInfo: null,
-    initComplete: false,
-    completedInitSteps: [],
-    isFailureMode: false,
+    scanPhone: '',
   }),
   setTargetInfo: (info) => set({ targetInfo: info }),
-  setInitComplete: (value) => set({ initComplete: value }),
-  setCompletedInitSteps: (steps) => set({ completedInitSteps: steps }),
-  setIsFailureMode: (value) => set({ isFailureMode: value }),
+  setScanPhone: (phone) => set({ scanPhone: phone }),
 }));
