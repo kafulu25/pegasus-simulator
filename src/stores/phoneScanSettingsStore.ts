@@ -22,6 +22,7 @@ const defaultSettings: PhoneScanSettings = {
   callDurationRange: [10, 300],
   coordinateRange: { latMin: 0.3, latMax: 0.35, lngMin: 32.5, lngMax: 32.65 },
   packetIntervalMs: 500, // milliseconds between packets
+  simulateFailure: false, // <-- ADD THIS
 };
 
 export const usePhoneScanSettingsStore = create<PhoneScanSettingsStore>()(
