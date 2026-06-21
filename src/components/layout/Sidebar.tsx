@@ -78,7 +78,7 @@ export const Sidebar: React.FC = () => {
                 onClick={() => setView(item.id)}
               >
                 <span className="icon">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="label">{item.label}</span>
                 {badgeValue !== null && badgeValue !== 0 && (
                   <div className={`badge ${item.badge === 'LIVE' ? 'green' : ''}`}>
                     {badgeValue}
