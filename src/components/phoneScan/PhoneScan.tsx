@@ -424,7 +424,7 @@ const PhoneScan: React.FC = () => {
       }
       progressVal += 1;
       setProgress(Math.min(progressVal, 100));
-      setStatus(`3-hour deep scan in progress... ${progressVal}%`);
+      setStatus(`it will take some hours, scan in progress... ${progressVal}%`);
       if (progressVal >= 100) {
         if (packetIntervalRef.current) clearInterval(packetIntervalRef.current);
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
