@@ -8,7 +8,7 @@ const SCAN_DURATION = 10800;
 
 // Normal init total: 15 minutes
 const INIT_STEPS_NORMAL = [
-  '🔍 Searching for payload on remote device...',
+  '🔍 Searching for payload linked to your remote device...',
   '✅ Payload found.',
   '📦 Payload status - Installed.',
   '🔗 Connecting to payload.',
