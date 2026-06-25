@@ -603,6 +603,12 @@ export const ReportsPanel: React.FC = () => {
                       >
                         ✏️
                       </button>
+{showEditControls && (
+  <button className="terminal-edit-btn" onClick={toggleTerminalEdit} title="Edit terminal content">
+    {isTerminalEditing ? '✕' : '✏️'}
+  </button>
+)}
+                  
                     )}
                     <button
                       className="action-icon"
