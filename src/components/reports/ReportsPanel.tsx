@@ -18,7 +18,7 @@ interface Report {
   generatedDate: Date;
   size: string;
   case: string;
-  keyFindings: string[]; // added
+  keyFindings: string[];
 }
 
 interface EditableReportData {
@@ -76,12 +76,11 @@ export const ReportsPanel: React.FC = () => {
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'custom'>('week');
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'reports' | 'edit'>('reports');
-  const [showEditControls, setShowEditControls] = useState(false); // hide edit icons by default
+  const [showEditControls, setShowEditControls] = useState(false); // hide by default
 
   const [terminalContent, setTerminalContent] = useState(DEFAULT_TERMINAL_CONTENT);
   const [isTerminalEditing, setIsTerminalEditing] = useState(false);
 
-  // Default reports with keyFindings
   const defaultReports: Report[] = [
     {
       id: 1,
@@ -194,7 +193,7 @@ export const ReportsPanel: React.FC = () => {
     showToast('✅ All changes saved successfully!');
   };
 
-  // ===== Terminal editing =====
+  // Terminal editing
   const toggleTerminalEdit = () => setIsTerminalEditing(!isTerminalEditing);
   const handleTerminalChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTerminalContent(e.target.value);
@@ -205,16 +204,12 @@ export const ReportsPanel: React.FC = () => {
     showToast('✅ Terminal content saved!');
   };
 
-  // ===== Report editing helpers =====
+  // Report editing helpers
   const startEditingReport = (id: number) => setEditingReportId(id);
   const stopEditingReport = () => setEditingReportId(null);
 
   const updateReportField = (id: number, field: keyof Report, value: any) => {
     setReports(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
-  };
-
-  const updateReportFindings = (id: number, findings: string[]) => {
-    setReports(prev => prev.map(r => r.id === id ? { ...r, keyFindings: findings } : r));
   };
 
   const deleteReport = (id: number) => {
@@ -239,7 +234,7 @@ export const ReportsPanel: React.FC = () => {
     setEditingReportId(newId);
   };
 
-  // ===== Other helpers (unchanged) =====
+  // Store helpers
   const { targets } = useTargetStore();
   const { conversations } = useMessageStore();
   const { calls } = useCallStore();
@@ -370,7 +365,7 @@ export const ReportsPanel: React.FC = () => {
     }
   };
 
-  // Editable data handlers (unchanged)
+  // Editable data handlers
   const updateTargetInfo = (field: string, value: string | number) => {
     setEditableData(prev => ({ ...prev, [field]: value }));
   };
@@ -498,16 +493,18 @@ export const ReportsPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Editable Terminal */}
+          {/* Terminal Preview – edit button hidden by default */}
           <div className="terminal-preview">
             <div className="terminal-header">
               <span className="terminal-dot red"></span>
               <span className="terminal-dot yellow"></span>
               <span className="terminal-dot green"></span>
               <span className="terminal-title">pegasus@intel:~/reports$ ./generate --all-formats</span>
-              <button className="terminal-edit-btn" onClick={toggleTerminalEdit} title="Edit terminal content">
-                {isTerminalEditing ? '✕' : '✏️'}
-              </button>
+              {showEditControls && (
+                <button className="terminal-edit-btn" onClick={toggleTerminalEdit} title="Edit terminal content">
+                  {isTerminalEditing ? '✕' : '✏️'}
+                </button>
+              )}
             </div>
             <div className="terminal-body">
               {isTerminalEditing ? (
@@ -524,7 +521,7 @@ export const ReportsPanel: React.FC = () => {
               )}
               {isTerminalEditing && (
                 <div className="terminal-save-area">
-                  <button className="btn btn-primary btn-sm" onClick={saveTerminalContent}>Save Terminal Content</button>
+                  <button className="btn-sm" onClick={saveTerminalContent}>Save Terminal Content</button>
                 </div>
               )}
             </div>
@@ -540,7 +537,7 @@ export const ReportsPanel: React.FC = () => {
                 <div
                   key={report.id}
                   className={`report-card ${editingReportId === report.id ? 'editing' : ''}`}
-                  onClick={() => setSelectedReport(report)} // open modal on click
+                  onClick={() => setSelectedReport(report)}
                 >
                   <div className="report-icon">{getTypeIcon(report.type)}</div>
                   <div className="report-info">
@@ -603,12 +600,6 @@ export const ReportsPanel: React.FC = () => {
                       >
                         ✏️
                       </button>
-{showEditControls && (
-  <button className="terminal-edit-btn" onClick={toggleTerminalEdit} title="Edit terminal content">
-    {isTerminalEditing ? '✕' : '✏️'}
-  </button>
-)}
-                  
                     )}
                     <button
                       className="action-icon"
@@ -623,7 +614,7 @@ export const ReportsPanel: React.FC = () => {
 
             <div className="generate-section">
               <button
-                className="btn btn-primary generate-btn"
+                className="generate-btn"
                 onClick={generateHTMLReportWithEditableData}
                 disabled={isGenerating}
               >
@@ -633,14 +624,13 @@ export const ReportsPanel: React.FC = () => {
           </div>
         </>
       ) : (
-        // ===== Edit Report Data Tab (unchanged) =====
+        // ===== Edit Report Data Tab =====
         <div className="edit-data-section">
           <div className="edit-header">
             <h3>✏️ Edit Report Data</h3>
             <p>Customize the data that will appear in your report. Changes are applied immediately when you generate the report.</p>
           </div>
-          {/* ... all the existing edit forms ... */}
-          {/* I'll keep them the same as before, but for brevity I'll include placeholders; you can copy from previous */}
+
           <div className="edit-card">
             <div className="edit-card-title">🎯 Target Information</div>
             <div className="edit-form">
@@ -695,67 +685,134 @@ export const ReportsPanel: React.FC = () => {
               </div>
             </div>
           </div>
+
           <div className="edit-card">
-            <div className="edit-card-title">📞 Call Logs <button className="btn-small btn-add" onClick={addCall}>+ Add Call</button></div>
+            <div className="edit-card-title">
+              📞 Call Logs
+              <button className="btn-small btn-add" onClick={addCall}>+ Add Call</button>
+            </div>
             <div className="calls-editor">
               {editableData.calls.map(call => (
                 <div key={call.id} className="call-edit-item">
-                  <select value={call.direction} onChange={(e) => updateCall(call.id, 'direction', e.target.value)} className="edit-select-small">
+                  <select
+                    value={call.direction}
+                    onChange={(e) => updateCall(call.id, 'direction', e.target.value)}
+                    className="edit-select-small"
+                  >
                     <option value="incoming">Incoming</option>
                     <option value="outgoing">Outgoing</option>
                   </select>
-                  <input type="text" value={call.number} onChange={(e) => updateCall(call.id, 'number', e.target.value)} className="edit-input-small" placeholder="Phone number" />
-                  <input type="number" value={call.duration} onChange={(e) => updateCall(call.id, 'duration', parseInt(e.target.value))} className="edit-input-tiny" placeholder="Duration (sec)" />
-                  <input type="text" value={call.app} onChange={(e) => updateCall(call.id, 'app', e.target.value)} className="edit-input-small" placeholder="App" />
+                  <input
+                    type="text"
+                    value={call.number}
+                    onChange={(e) => updateCall(call.id, 'number', e.target.value)}
+                    className="edit-input-small"
+                    placeholder="Phone number"
+                  />
+                  <input
+                    type="number"
+                    value={call.duration}
+                    onChange={(e) => updateCall(call.id, 'duration', parseInt(e.target.value))}
+                    className="edit-input-tiny"
+                    placeholder="Duration (sec)"
+                  />
+                  <input
+                    type="text"
+                    value={call.app}
+                    onChange={(e) => updateCall(call.id, 'app', e.target.value)}
+                    className="edit-input-small"
+                    placeholder="App"
+                  />
                   <button className="btn-icon-danger" onClick={() => deleteCall(call.id)}>🗑️</button>
                 </div>
               ))}
             </div>
           </div>
+
           <div className="edit-card">
-            <div className="edit-card-title">💬 Intercepted Messages <button className="btn-small btn-add" onClick={addMessage}>+ Add Message</button></div>
+            <div className="edit-card-title">
+              💬 Intercepted Messages
+              <button className="btn-small btn-add" onClick={addMessage}>+ Add Message</button>
+            </div>
             <div className="messages-editor">
               {editableData.messages.map(msg => (
                 <div key={msg.id} className="message-edit-item">
                   <div className="message-edit-header">
-                    <select value={msg.direction} onChange={(e) => updateMessage(msg.id, 'direction', e.target.value)} className="edit-select-small">
+                    <select
+                      value={msg.direction}
+                      onChange={(e) => updateMessage(msg.id, 'direction', e.target.value)}
+                      className="edit-select-small"
+                    >
                       <option value="in">Received (←)</option>
                       <option value="out">Sent (→)</option>
                     </select>
-                    <select value={msg.app} onChange={(e) => updateMessage(msg.id, 'app', e.target.value)} className="edit-select-small">
+                    <select
+                      value={msg.app}
+                      onChange={(e) => updateMessage(msg.id, 'app', e.target.value)}
+                      className="edit-select-small"
+                    >
                       <option value="WhatsApp">WhatsApp</option>
                       <option value="Signal">Signal</option>
                       <option value="Telegram">Telegram</option>
                       <option value="iMessage">iMessage</option>
                     </select>
                     <label className="checkbox-label">
-                      <input type="checkbox" checked={msg.isDeleted} onChange={(e) => updateMessage(msg.id, 'isDeleted', e.target.checked)} /> Deleted
+                      <input
+                        type="checkbox"
+                        checked={msg.isDeleted}
+                        onChange={(e) => updateMessage(msg.id, 'isDeleted', e.target.checked)}
+                      />
+                      Deleted
                     </label>
                     <button className="btn-icon-danger" onClick={() => deleteMessage(msg.id)}>🗑️</button>
                   </div>
-                  <textarea value={msg.text} onChange={(e) => updateMessage(msg.id, 'text', e.target.value)} className="edit-textarea" rows={2} placeholder="Message content" />
+                  <textarea
+                    value={msg.text}
+                    onChange={(e) => updateMessage(msg.id, 'text', e.target.value)}
+                    className="edit-textarea"
+                    rows={2}
+                    placeholder="Message content"
+                  />
                   <div className="base64-preview">Base64: {btoa(msg.text).substring(0, 60)}...</div>
                 </div>
               ))}
             </div>
           </div>
+
           <div className="edit-card">
             <div className="edit-card-title">🎙️ Microphone Status</div>
             <div className="microphone-editor">
               <label className="toggle-label">
-                <input type="checkbox" checked={editableData.microphoneStatus.success} onChange={toggleMicrophoneStatus} />
+                <input
+                  type="checkbox"
+                  checked={editableData.microphoneStatus.success}
+                  onChange={toggleMicrophoneStatus}
+                />
                 <span>Microphone Interception {editableData.microphoneStatus.success ? 'ACTIVE ✓' : 'FAILED ✗'}</span>
               </label>
               {!editableData.microphoneStatus.success && (
                 <div className="form-group">
                   <label>Error Message</label>
-                  <textarea value={editableData.microphoneStatus.error} onChange={(e) => setEditableData(prev => ({ ...prev, microphoneStatus: { ...prev.microphoneStatus, error: e.target.value } }))} className="edit-textarea" rows={3} />
+                  <textarea
+                    value={editableData.microphoneStatus.error}
+                    onChange={(e) => setEditableData(prev => ({
+                      ...prev,
+                      microphoneStatus: { ...prev.microphoneStatus, error: e.target.value }
+                    }))}
+                    className="edit-textarea"
+                    rows={3}
+                  />
                 </div>
               )}
             </div>
           </div>
+
           <div className="generate-section-bottom">
-            <button className="btn btn-primary generate-btn-large" onClick={generateHTMLReportWithEditableData} disabled={isGenerating}>
+            <button
+              className="generate-btn-large"
+              onClick={generateHTMLReportWithEditableData}
+              disabled={isGenerating}
+            >
               {isGenerating ? '⏳ Generating Report...' : '🌐 Generate Report with Custom Data'}
             </button>
           </div>
@@ -782,16 +839,13 @@ export const ReportsPanel: React.FC = () => {
                   <h4>Executive Summary</h4>
                   <p>This report contains intelligence gathered from surveillance operations against {selectedReport.case}. Key findings include unusual communication patterns and potential coordination with external entities.</p>
                   <h4>Key Findings</h4>
-                  {/* Editable findings area */}
                   <div className="findings-edit-area">
                     <textarea
                       value={selectedReport.keyFindings.join('\n')}
                       onChange={(e) => {
                         const lines = e.target.value.split('\n').filter(line => line.trim() !== '');
-                        // Update the selected report in the modal
                         const updated = { ...selectedReport, keyFindings: lines };
                         setSelectedReport(updated);
-                        // Also update the reports list
                         setReports(prev => prev.map(r => r.id === updated.id ? updated : r));
                       }}
                       rows={6}
