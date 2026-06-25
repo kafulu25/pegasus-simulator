@@ -7,10 +7,11 @@ import { useViewStore } from './stores/viewStore';
 import { useFeedStore } from './stores/feedStore';
 import { useTargetStore } from './stores/targetStore';
 import { mockTargets } from './utils/mockData';
+import { useFullScreen } from './hooks/useFullScreen'; // <-- import
 import './App.css';
 
 // Import all panels
-import { OverviewPanel } from './components/overview/OverviewPanel';
+import { OverviewPanel } from './components/overview/OverviewPanel';  
 import { TargetsPanel } from './components/targets/TargetsPanel';
 import { LiveFeedPanel } from './components/livefeed/LiveFeedPanel';
 import { LocationPanel } from './components/location/LocationPanel';
@@ -33,7 +34,7 @@ import { ReportsPanel } from './components/reports/ReportsPanel';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { OsintPanel } from './components/osint/OsintPanel';
 import { ExpertMode } from './components/expert/ExpertMode';
-import PhoneScan from './components/phoneScan/PhoneScan';  // <-- added
+import PhoneScan from './components/phoneScan/PhoneScan';
 
 const panelMap: Record<string, React.ComponentType> = {
   overview: OverviewPanel,
@@ -59,7 +60,7 @@ const panelMap: Record<string, React.ComponentType> = {
   admin: AdminPanel,
   osint: OsintPanel,
   expert: ExpertMode,
-  phoneScan: PhoneScan,  // <-- added
+  phoneScan: PhoneScan,
 };
 
 function App() {
@@ -68,6 +69,9 @@ function App() {
   const { startLiveStream } = useFeedStore();
   const { setView, currentView } = useViewStore();
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Enter full‑screen when authenticated
+  useFullScreen(isAuthenticated);
 
   useEffect(() => {
     const stored = localStorage.getItem('pegasus-auth');
