@@ -11,67 +11,78 @@ export const TopBar: React.FC = () => {
   const { setView, currentView } = useViewStore();
   const { isLive } = useFeedStore();
   const { logout, user } = useAuthStore();
-  
+
   const handleNavigation = (view: string) => {
     console.log('📍 TopBar: Navigating to:', view);
     setView(view);
   };
-  
+
   const handleLogout = () => {
     logout();
     setView('overview');
     window.location.reload();
   };
-  
+
+  // 👇 Hidden exit method: double‑click the logo to exit full‑screen
+  const handleLogoDoubleClick = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(err => console.warn('Exit fullscreen failed:', err));
+    }
+  };
+
   return (
     <div className="topbar">
-      <div className="logo-area">
+      <div 
+        className="logo-area" 
+        onDoubleClick={handleLogoDoubleClick}
+        style={{ cursor: 'pointer' }} // subtle hint that it's interactive
+      >
         <img src={logoImage} alt="Logo" className="logo-image" />
         <div className="logo-text">
           <div className="logo-name">PEGASUS</div>
           <div className="logo-sub">NSO INTELLIGENCE PLATFORM</div>
         </div>
       </div>
-      
+
       <div className="topbar-center">
-        <div 
-          className={`top-nav ${currentView === 'overview' ? 'active' : ''}`} 
+        <div
+          className={`top-nav ${currentView === 'overview' ? 'active' : ''}`}
           onClick={() => handleNavigation('overview')}
         >
           DASHBOARD
         </div>
-        <div 
-          className={`top-nav ${currentView === 'cases' ? 'active' : ''}`} 
+        <div
+          className={`top-nav ${currentView === 'cases' ? 'active' : ''}`}
           onClick={() => handleNavigation('cases')}
         >
           CASES
         </div>
-        <div 
-          className={`top-nav ${currentView === 'reports' ? 'active' : ''}`} 
+        <div
+          className={`top-nav ${currentView === 'reports' ? 'active' : ''}`}
           onClick={() => handleNavigation('reports')}
         >
           REPORTS
         </div>
-        <div 
-          className={`top-nav ${currentView === 'admin' ? 'active' : ''}`} 
+        <div
+          className={`top-nav ${currentView === 'admin' ? 'active' : ''}`}
           onClick={() => handleNavigation('admin')}
         >
           ADMIN
         </div>
-        <div 
-          className={`top-nav ${currentView === 'osint' ? 'active' : ''}`} 
+        <div
+          className={`top-nav ${currentView === 'osint' ? 'active' : ''}`}
           onClick={() => handleNavigation('osint')}
         >
           OSINT
         </div>
-        <div 
-          className={`top-nav ${currentView === 'expert' ? 'active' : ''}`} 
+        <div
+          className={`top-nav ${currentView === 'expert' ? 'active' : ''}`}
           onClick={() => handleNavigation('expert')}
         >
           EXPERT MODE
         </div>
       </div>
-      
+
       <div className="topbar-right">
         <div className="status-badge">
           <div className="status-dot online"></div>
