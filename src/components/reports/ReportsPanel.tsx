@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { TerminalReportPDF } from '@/utils/pdfGenerator';
 import { useTargetStore } from '@/stores/targetStore';
@@ -21,7 +21,6 @@ interface Report {
   case: string;
 }
 
-// Editable Report Data Interface
 interface EditableReportData {
   targetName: string;
   targetPhone: string;
@@ -54,49 +53,37 @@ interface EditableReportData {
   };
 }
 
+// Default terminal content
+const DEFAULT_TERMINAL_CONTENT = `[INFO] Pegasus Report Generator v4.2.2 - Intelligence Division
+[INFO] ====================================================
+[INFO] Available report formats:
+[INFO]   1. Terminal PDF    - Green-on-black terminal style
+[INFO]   2. HTML + Map      - Interactive map + Base64 messages
+[INFO] 
+[STATUS] Active Targets: ${0}
+[STATUS] Total Data Volume: 2.4 TB
+[STATUS] Messages Intercepted: ${0}
+[STATUS] Call Recordings: ${0}
+[STATUS] Location Points: ${0}
+[STATUS] Extracted Credentials: ${0}
+
+[!] Click "Edit Report Data" tab to customize report content
+[!] Then click "Generate HTML Report" to see your changes
+
+$ _`;
+
 export const ReportsPanel: React.FC = () => {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'custom'>('week');
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'reports' | 'edit'>('reports');
-  
-  // Editable data state
-  const [editableData, setEditableData] = useState<EditableReportData>({
-    targetName: 'Target001',
-    targetPhone: '+256703675421',
-    targetCoordinates: {
-      lat: 35.6892,
-      lng: 51.3890,
-      ip: '185.165.29.182'
-    },
-    calls: [
-      { id: 1, direction: 'incoming', number: '+256703675421', duration: 502, timestamp: new Date(), app: 'WhatsApp' },
-      { id: 2, direction: 'outgoing', number: '+989123456789', duration: 180, timestamp: new Date(Date.now() - 3600000), app: 'Cellular' },
-      { id: 3, direction: 'incoming', number: '+447911123456', duration: 944, timestamp: new Date(Date.now() - 7200000), app: 'Signal' },
-      { id: 4, direction: 'outgoing', number: '+256703675421', duration: 45, timestamp: new Date(Date.now() - 10800000), app: 'Telegram' },
-    ],
-    messages: [
-      { id: 1, direction: 'in', text: 'The documents are ready. Meet at 6pm.', base64: btoa('The documents are ready. Meet at 6pm.'), timestamp: new Date(), isDeleted: false, app: 'WhatsApp' },
-      { id: 2, direction: 'out', text: 'Confirmed. I will be there.', base64: btoa('Confirmed. I will be there.'), timestamp: new Date(Date.now() - 1800000), isDeleted: false, app: 'WhatsApp' },
-      { id: 3, direction: 'in', text: 'URGENT: Delete all previous messages. Security risk detected.', base64: btoa('URGENT: Delete all previous messages. Security risk detected.'), timestamp: new Date(Date.now() - 3600000), isDeleted: true, app: 'Signal' },
-      { id: 4, direction: 'in', text: 'The package has been delivered to the safe house.', base64: btoa('The package has been delivered to the safe house.'), timestamp: new Date(Date.now() - 5400000), isDeleted: false, app: 'Telegram' },
-      { id: 5, direction: 'out', text: 'I need the extraction plan by tomorrow.', base64: btoa('I need the extraction plan by tomorrow.'), timestamp: new Date(Date.now() - 7200000), isDeleted: true, app: 'Signal' },
-    ],
-    microphoneStatus: {
-      success: false,
-      error: 'END_TO_END_ENCRYPTION_DETECTED - Signal protocol prevents audio interception',
-      timestamp: new Date()
-    }
-  });
-  
-  const { targets } = useTargetStore();
-  const { conversations } = useMessageStore();
-  const { calls } = useCallStore();
-  const { locations } = useLocationStore();
-  const { photos, documents, screenshots } = useMediaStore();
-  const { credentials } = usePasswordStore();
-  
-  const mockReports: Report[] = [
+
+  // ===== Editable Terminal Content =====
+  const [terminalContent, setTerminalContent] = useState(DEFAULT_TERMINAL_CONTENT);
+  const [isTerminalEditing, setIsTerminalEditing] = useState(false);
+
+  // ===== Editable Reports List =====
+  const defaultReports: Report[] = [
     {
       id: 1,
       name: 'Q1 Intelligence Summary',
@@ -134,7 +121,112 @@ export const ReportsPanel: React.FC = () => {
       case: 'All Cases',
     },
   ];
-  
+
+  const [reports, setReports] = useState<Report[]>(defaultReports);
+  const [editingReportId, setEditingReportId] = useState<number | null>(null);
+
+  // ===== Editable Report Data (for HTML generation) =====
+  const [editableData, setEditableData] = useState<EditableReportData>({
+    targetName: 'Target001',
+    targetPhone: '+256703675421',
+    targetCoordinates: {
+      lat: 35.6892,
+      lng: 51.3890,
+      ip: '185.165.29.182'
+    },
+    calls: [
+      { id: 1, direction: 'incoming', number: '+256703675421', duration: 502, timestamp: new Date(), app: 'WhatsApp' },
+      { id: 2, direction: 'outgoing', number: '+989123456789', duration: 180, timestamp: new Date(Date.now() - 3600000), app: 'Cellular' },
+      { id: 3, direction: 'incoming', number: '+447911123456', duration: 944, timestamp: new Date(Date.now() - 7200000), app: 'Signal' },
+      { id: 4, direction: 'outgoing', number: '+256703675421', duration: 45, timestamp: new Date(Date.now() - 10800000), app: 'Telegram' },
+    ],
+    messages: [
+      { id: 1, direction: 'in', text: 'The documents are ready. Meet at 6pm.', base64: btoa('The documents are ready. Meet at 6pm.'), timestamp: new Date(), isDeleted: false, app: 'WhatsApp' },
+      { id: 2, direction: 'out', text: 'Confirmed. I will be there.', base64: btoa('Confirmed. I will be there.'), timestamp: new Date(Date.now() - 1800000), isDeleted: false, app: 'WhatsApp' },
+      { id: 3, direction: 'in', text: 'URGENT: Delete all previous messages. Security risk detected.', base64: btoa('URGENT: Delete all previous messages. Security risk detected.'), timestamp: new Date(Date.now() - 3600000), isDeleted: true, app: 'Signal' },
+      { id: 4, direction: 'in', text: 'The package has been delivered to the safe house.', base64: btoa('The package has been delivered to the safe house.'), timestamp: new Date(Date.now() - 5400000), isDeleted: false, app: 'Telegram' },
+      { id: 5, direction: 'out', text: 'I need the extraction plan by tomorrow.', base64: btoa('I need the extraction plan by tomorrow.'), timestamp: new Date(Date.now() - 7200000), isDeleted: true, app: 'Signal' },
+    ],
+    microphoneStatus: {
+      success: false,
+      error: 'END_TO_END_ENCRYPTION_DETECTED - Signal protocol prevents audio interception',
+      timestamp: new Date()
+    }
+  });
+
+  // ===== Load from localStorage on mount =====
+  useEffect(() => {
+    const savedTerminal = localStorage.getItem('pegasus_terminal_content');
+    if (savedTerminal) setTerminalContent(savedTerminal);
+
+    const savedReports = localStorage.getItem('pegasus_reports');
+    if (savedReports) {
+      try {
+        const parsed = JSON.parse(savedReports);
+        // Convert date strings back to Date objects
+        const reportsWithDates = parsed.map((r: any) => ({ ...r, generatedDate: new Date(r.generatedDate) }));
+        setReports(reportsWithDates);
+      } catch {}
+    }
+  }, []);
+
+  // ===== Save functions =====
+  const saveAllChanges = () => {
+    localStorage.setItem('pegasus_terminal_content', terminalContent);
+    localStorage.setItem('pegasus_reports', JSON.stringify(reports));
+    showToast('✅ All changes saved successfully!');
+  };
+
+  // ===== Terminal editing =====
+  const toggleTerminalEdit = () => setIsTerminalEditing(!isTerminalEditing);
+
+  const handleTerminalChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTerminalContent(e.target.value);
+  };
+
+  const saveTerminalContent = () => {
+    setIsTerminalEditing(false);
+    localStorage.setItem('pegasus_terminal_content', terminalContent);
+    showToast('✅ Terminal content saved!');
+  };
+
+  // ===== Report editing helpers =====
+  const startEditingReport = (id: number) => setEditingReportId(id);
+  const stopEditingReport = () => setEditingReportId(null);
+
+  const updateReportField = (id: number, field: keyof Report, value: string | Date) => {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
+
+  const deleteReport = (id: number) => {
+    if (window.confirm('Delete this report?')) {
+      setReports(prev => prev.filter(r => r.id !== id));
+    }
+  };
+
+  const addNewReport = () => {
+    const newId = Date.now();
+    const newReport: Report = {
+      id: newId,
+      name: 'New Report',
+      type: 'summary',
+      generatedBy: 'Operator',
+      generatedDate: new Date(),
+      size: '0 MB',
+      case: 'New Case',
+    };
+    setReports(prev => [...prev, newReport]);
+    setEditingReportId(newId);
+  };
+
+  // ===== Existing helpers (unchanged) =====
+  const { targets } = useTargetStore();
+  const { conversations } = useMessageStore();
+  const { calls } = useCallStore();
+  const { locations } = useLocationStore();
+  const { photos, documents, screenshots } = useMediaStore();
+  const { credentials } = usePasswordStore();
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'intelligence': return '🕵️';
@@ -144,28 +236,27 @@ export const ReportsPanel: React.FC = () => {
       default: return '📄';
     }
   };
-  
+
   const showToast = (message: string, isError: boolean = false) => {
     const toast = document.createElement('div');
     toast.className = 'edit-toast';
-    toast.style.background = isError ? '#ff4444' : '#00ff00';
-    toast.style.color = '#000000';
+    toast.style.background = isError ? '#ff4444' : '#0193c6';
+    toast.style.color = '#ffffff';
     toast.innerHTML = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   };
-  
-  // Generate Terminal Style PDF Report
+
+  // ===== PDF/HTML Generation (unchanged, but using updated terminal content) =====
   const generateTerminalPDF = async () => {
     setIsGenerating(true);
-    
     const totalMessages = conversations.reduce((sum, c) => sum + c.unread + 10, 0);
     const totalCalls = calls.length;
     const totalLocations = locations.length;
     const totalPhotos = photos.length + screenshots.length;
     const totalPasswords = credentials.length;
     const totalDataSize = '2.4 TB';
-    
+
     const reportData = {
       caseName: 'Operation Nightfall - Intelligence Report',
       generatedBy: 'Operator 7',
@@ -205,7 +296,7 @@ export const ReportsPanel: React.FC = () => {
         'Consider additional infiltration vectors for enhanced data collection',
       ],
     };
-    
+
     try {
       const blob = await pdf(<TerminalReportPDF data={reportData} />).toBlob();
       const url = URL.createObjectURL(blob);
@@ -216,7 +307,7 @@ export const ReportsPanel: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      showToast('✅ Terminal-style PDF report downloaded successfully!', false);
+      showToast('✅ Terminal-style PDF report downloaded successfully!');
     } catch (error) {
       console.error('PDF generation failed:', error);
       showToast('❌ Failed to generate PDF. Please try again.', true);
@@ -224,11 +315,10 @@ export const ReportsPanel: React.FC = () => {
       setIsGenerating(false);
     }
   };
-  
-  // Generate HTML Report with editable data
+
   const generateHTMLReportWithEditableData = async () => {
     setIsGenerating(true);
-    
+
     const callStats = {
       total: editableData.calls.length,
       incoming: editableData.calls.filter(c => c.direction === 'incoming').length,
@@ -236,7 +326,7 @@ export const ReportsPanel: React.FC = () => {
       uniqueNumbers: new Set(editableData.calls.map(c => c.number)).size,
       totalDuration: editableData.calls.reduce((sum, c) => sum + c.duration, 0),
     };
-    
+
     const targetData = {
       targetName: editableData.targetName,
       targetPhone: editableData.targetPhone,
@@ -248,14 +338,14 @@ export const ReportsPanel: React.FC = () => {
       deletedMessages: editableData.messages.filter(m => m.isDeleted).length,
       locationCount: 23
     };
-    
+
     try {
       const htmlContent = generateHTMLReport(targetData);
       const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
       const htmlUrl = URL.createObjectURL(htmlBlob);
       window.open(htmlUrl, '_blank');
       URL.revokeObjectURL(htmlUrl);
-      showToast('✅ HTML report generated with your custom data!', false);
+      showToast('✅ HTML report generated with your custom data!');
     } catch (error) {
       console.error('Report generation failed:', error);
       showToast('❌ Failed to generate report', true);
@@ -263,19 +353,19 @@ export const ReportsPanel: React.FC = () => {
       setIsGenerating(false);
     }
   };
-  
-  // Update editable data handlers
+
+  // ===== Editable Data Handlers (unchanged) =====
   const updateTargetInfo = (field: string, value: string | number) => {
     setEditableData(prev => ({ ...prev, [field]: value }));
   };
-  
+
   const updateCoordinates = (field: 'lat' | 'lng' | 'ip', value: string | number) => {
     setEditableData(prev => ({
       ...prev,
       targetCoordinates: { ...prev.targetCoordinates, [field]: value }
     }));
   };
-  
+
   const addCall = () => {
     const newCall = {
       id: Date.now(),
@@ -290,21 +380,21 @@ export const ReportsPanel: React.FC = () => {
       calls: [...prev.calls, newCall]
     }));
   };
-  
+
   const updateCall = (id: number, field: string, value: any) => {
     setEditableData(prev => ({
       ...prev,
       calls: prev.calls.map(call => call.id === id ? { ...call, [field]: value } : call)
     }));
   };
-  
+
   const deleteCall = (id: number) => {
     setEditableData(prev => ({
       ...prev,
       calls: prev.calls.filter(call => call.id !== id)
     }));
   };
-  
+
   const addMessage = () => {
     const newMessage = {
       id: Date.now(),
@@ -320,7 +410,7 @@ export const ReportsPanel: React.FC = () => {
       messages: [...prev.messages, newMessage]
     }));
   };
-  
+
   const updateMessage = (id: number, field: string, value: any) => {
     setEditableData(prev => ({
       ...prev,
@@ -336,14 +426,14 @@ export const ReportsPanel: React.FC = () => {
       })
     }));
   };
-  
+
   const deleteMessage = (id: number) => {
     setEditableData(prev => ({
       ...prev,
       messages: prev.messages.filter(msg => msg.id !== id)
     }));
   };
-  
+
   const toggleMicrophoneStatus = () => {
     setEditableData(prev => ({
       ...prev,
@@ -354,7 +444,7 @@ export const ReportsPanel: React.FC = () => {
       }
     }));
   };
-  
+
   return (
     <div className="reports-panel">
       <div className="panel-header">
@@ -364,24 +454,26 @@ export const ReportsPanel: React.FC = () => {
           </div>
           <div className="panel-subtitle">Generate and export intelligence reports</div>
         </div>
+        <button className="btn-save-all" onClick={saveAllChanges}>
+          💾 Save All Changes
+        </button>
       </div>
-      
-      {/* Tabs */}
+
       <div className="report-tabs">
-        <button 
+        <button
           className={`report-tab ${activeTab === 'reports' ? 'active' : ''}`}
           onClick={() => setActiveTab('reports')}
         >
           📄 Generate Reports
         </button>
-        <button 
+        <button
           className={`report-tab ${activeTab === 'edit' ? 'active' : ''}`}
           onClick={() => setActiveTab('edit')}
         >
           ✏️ Edit Report Data
         </button>
       </div>
-      
+
       {activeTab === 'reports' ? (
         <>
           <div className="report-filters">
@@ -404,65 +496,114 @@ export const ReportsPanel: React.FC = () => {
               </select>
             </div>
           </div>
-          
+
+          {/* Editable Terminal Preview */}
           <div className="terminal-preview">
             <div className="terminal-header">
               <span className="terminal-dot red"></span>
               <span className="terminal-dot yellow"></span>
               <span className="terminal-dot green"></span>
               <span className="terminal-title">pegasus@intel:~/reports$ ./generate --all-formats</span>
+              <button className="terminal-edit-btn" onClick={toggleTerminalEdit} title="Edit terminal content">
+                {isTerminalEditing ? '✕' : '✏️'}
+              </button>
             </div>
             <div className="terminal-body">
-              <pre className="terminal-output">
-{`[INFO] Pegasus Report Generator v4.2.2 - Intelligence Division
-[INFO] ====================================================
-[INFO] Available report formats:
-[INFO]   1. Terminal PDF    - Green-on-black terminal style
-[INFO]   2. HTML + Map      - Interactive map + Base64 messages
-[INFO] 
-[STATUS] Active Targets: ${targets.length}
-[STATUS] Total Data Volume: 2.4 TB
-[STATUS] Messages Intercepted: ${conversations.reduce((sum, c) => sum + c.unread + 10, 0).toLocaleString()}
-[STATUS] Call Recordings: ${calls.length}
-[STATUS] Location Points: ${locations.length}
-[STATUS] Extracted Credentials: ${credentials.length}
-
-[!] Click "Edit Report Data" tab to customize report content
-[!] Then click "Generate HTML Report" to see your changes
-
-$ _`}
-              </pre>
+              {isTerminalEditing ? (
+                <textarea
+                  className="terminal-textarea"
+                  value={terminalContent}
+                  onChange={handleTerminalChange}
+                  rows={12}
+                  cols={80}
+                  autoFocus
+                />
+              ) : (
+                <pre className="terminal-output">{terminalContent}</pre>
+              )}
+              {isTerminalEditing && (
+                <div className="terminal-save-area">
+                  <button className="btn btn-primary btn-sm" onClick={saveTerminalContent}>Save Terminal Content</button>
+                </div>
+              )}
             </div>
           </div>
-          
+
           <div className="scroll-content">
+            <div className="reports-header-actions">
+              <span className="reports-count">{reports.length} reports</span>
+              <button className="btn-add-report" onClick={addNewReport}>+ Add Report</button>
+            </div>
             <div className="reports-grid">
-              {mockReports.map(report => (
-                <div key={report.id} className="report-card" onClick={() => setSelectedReport(report)}>
+              {reports.map(report => (
+                <div key={report.id} className={`report-card ${editingReportId === report.id ? 'editing' : ''}`}>
                   <div className="report-icon">{getTypeIcon(report.type)}</div>
                   <div className="report-info">
-                    <div className="report-name">{report.name}</div>
-                    <div className="report-meta">
-                      <span className="report-type">{report.type}</span>
-                      <span className="report-case">{report.case}</span>
-                    </div>
-                    <div className="report-details">
-                      <span>👤 {report.generatedBy}</span>
-                      <span>📅 {report.generatedDate.toLocaleDateString()}</span>
-                      <span>💾 {report.size}</span>
-                    </div>
+                    {editingReportId === report.id ? (
+                      <div className="report-edit-form">
+                        <input
+                          type="text"
+                          value={report.name}
+                          onChange={(e) => updateReportField(report.id, 'name', e.target.value)}
+                          className="edit-input-small"
+                          placeholder="Report name"
+                        />
+                        <select
+                          value={report.type}
+                          onChange={(e) => updateReportField(report.id, 'type', e.target.value as any)}
+                          className="edit-select-small"
+                        >
+                          <option value="summary">Summary</option>
+                          <option value="intelligence">Intelligence</option>
+                          <option value="financial">Financial</option>
+                          <option value="technical">Technical</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={report.case}
+                          onChange={(e) => updateReportField(report.id, 'case', e.target.value)}
+                          className="edit-input-small"
+                          placeholder="Case"
+                        />
+                        <input
+                          type="text"
+                          value={report.generatedBy}
+                          onChange={(e) => updateReportField(report.id, 'generatedBy', e.target.value)}
+                          className="edit-input-small"
+                          placeholder="Generated by"
+                        />
+                        <button className="btn-icon-save" onClick={() => stopEditingReport()} title="Save">✅</button>
+                        <button className="btn-icon-danger" onClick={() => deleteReport(report.id)} title="Delete">🗑️</button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="report-name">{report.name}</div>
+                        <div className="report-meta">
+                          <span className="report-type">{report.type}</span>
+                          <span className="report-case">{report.case}</span>
+                        </div>
+                        <div className="report-details">
+                          <span>👤 {report.generatedBy}</span>
+                          <span>📅 {new Date(report.generatedDate).toLocaleDateString()}</span>
+                          <span>💾 {report.size}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="report-actions">
+                    {editingReportId !== report.id && (
+                      <button className="action-icon" onClick={() => startEditingReport(report.id)}>✏️</button>
+                    )}
                     <button className="action-icon" onClick={(e) => { e.stopPropagation(); generateTerminalPDF(); }}>⬇️ PDF</button>
                   </div>
                 </div>
               ))}
             </div>
-            
+
             <div className="generate-section">
-              <button 
-                className="btn btn-primary generate-btn" 
-                onClick={generateHTMLReportWithEditableData} 
+              <button
+                className="btn btn-primary generate-btn"
+                onClick={generateHTMLReportWithEditableData}
                 disabled={isGenerating}
               >
                 {isGenerating ? '⏳ Generating...' : '🌐 Generate HTML Report (with your data)'}
@@ -471,39 +612,40 @@ $ _`}
           </div>
         </>
       ) : (
+        // ===== Edit Report Data Tab (unchanged) =====
         <div className="edit-data-section">
           <div className="edit-header">
             <h3>✏️ Edit Report Data</h3>
             <p>Customize the data that will appear in your report. Changes are applied immediately when you generate the report.</p>
           </div>
-          
+
           {/* Target Information Editor */}
           <div className="edit-card">
             <div className="edit-card-title">🎯 Target Information</div>
             <div className="edit-form">
               <div className="form-group">
                 <label>Target Name</label>
-                <input 
-                  type="text" 
-                  value={editableData.targetName} 
+                <input
+                  type="text"
+                  value={editableData.targetName}
                   onChange={(e) => updateTargetInfo('targetName', e.target.value)}
                   className="edit-input"
                 />
               </div>
               <div className="form-group">
                 <label>Phone Number</label>
-                <input 
-                  type="text" 
-                  value={editableData.targetPhone} 
+                <input
+                  type="text"
+                  value={editableData.targetPhone}
                   onChange={(e) => updateTargetInfo('targetPhone', e.target.value)}
                   className="edit-input"
                 />
               </div>
               <div className="form-group">
                 <label>IP Address</label>
-                <input 
-                  type="text" 
-                  value={editableData.targetCoordinates.ip} 
+                <input
+                  type="text"
+                  value={editableData.targetCoordinates.ip}
                   onChange={(e) => updateCoordinates('ip', e.target.value)}
                   className="edit-input"
                 />
@@ -511,20 +653,20 @@ $ _`}
               <div className="form-row-2">
                 <div className="form-group">
                   <label>Latitude</label>
-                  <input 
-                    type="number" 
-                    step="any" 
-                    value={editableData.targetCoordinates.lat} 
+                  <input
+                    type="number"
+                    step="any"
+                    value={editableData.targetCoordinates.lat}
                     onChange={(e) => updateCoordinates('lat', parseFloat(e.target.value))}
                     className="edit-input"
                   />
                 </div>
                 <div className="form-group">
                   <label>Longitude</label>
-                  <input 
-                    type="number" 
-                    step="any" 
-                    value={editableData.targetCoordinates.lng} 
+                  <input
+                    type="number"
+                    step="any"
+                    value={editableData.targetCoordinates.lng}
                     onChange={(e) => updateCoordinates('lng', parseFloat(e.target.value))}
                     className="edit-input"
                   />
@@ -532,7 +674,7 @@ $ _`}
               </div>
             </div>
           </div>
-          
+
           {/* Call Logs Editor */}
           <div className="edit-card">
             <div className="edit-card-title">
@@ -542,31 +684,31 @@ $ _`}
             <div className="calls-editor">
               {editableData.calls.map(call => (
                 <div key={call.id} className="call-edit-item">
-                  <select 
-                    value={call.direction} 
+                  <select
+                    value={call.direction}
                     onChange={(e) => updateCall(call.id, 'direction', e.target.value)}
                     className="edit-select-small"
                   >
                     <option value="incoming">Incoming</option>
                     <option value="outgoing">Outgoing</option>
                   </select>
-                  <input 
-                    type="text" 
-                    value={call.number} 
+                  <input
+                    type="text"
+                    value={call.number}
                     onChange={(e) => updateCall(call.id, 'number', e.target.value)}
                     className="edit-input-small"
                     placeholder="Phone number"
                   />
-                  <input 
-                    type="number" 
-                    value={call.duration} 
+                  <input
+                    type="number"
+                    value={call.duration}
                     onChange={(e) => updateCall(call.id, 'duration', parseInt(e.target.value))}
                     className="edit-input-tiny"
                     placeholder="Duration (sec)"
                   />
-                  <input 
-                    type="text" 
-                    value={call.app} 
+                  <input
+                    type="text"
+                    value={call.app}
                     onChange={(e) => updateCall(call.id, 'app', e.target.value)}
                     className="edit-input-small"
                     placeholder="App"
@@ -576,7 +718,7 @@ $ _`}
               ))}
             </div>
           </div>
-          
+
           {/* Messages Editor */}
           <div className="edit-card">
             <div className="edit-card-title">
@@ -587,16 +729,16 @@ $ _`}
               {editableData.messages.map(msg => (
                 <div key={msg.id} className="message-edit-item">
                   <div className="message-edit-header">
-                    <select 
-                      value={msg.direction} 
+                    <select
+                      value={msg.direction}
                       onChange={(e) => updateMessage(msg.id, 'direction', e.target.value)}
                       className="edit-select-small"
                     >
                       <option value="in">Received (←)</option>
                       <option value="out">Sent (→)</option>
                     </select>
-                    <select 
-                      value={msg.app} 
+                    <select
+                      value={msg.app}
                       onChange={(e) => updateMessage(msg.id, 'app', e.target.value)}
                       className="edit-select-small"
                     >
@@ -606,17 +748,17 @@ $ _`}
                       <option value="iMessage">iMessage</option>
                     </select>
                     <label className="checkbox-label">
-                      <input 
-                        type="checkbox" 
-                        checked={msg.isDeleted} 
+                      <input
+                        type="checkbox"
+                        checked={msg.isDeleted}
                         onChange={(e) => updateMessage(msg.id, 'isDeleted', e.target.checked)}
                       />
                       Deleted
                     </label>
                     <button className="btn-icon-danger" onClick={() => deleteMessage(msg.id)}>🗑️</button>
                   </div>
-                  <textarea 
-                    value={msg.text} 
+                  <textarea
+                    value={msg.text}
                     onChange={(e) => updateMessage(msg.id, 'text', e.target.value)}
                     className="edit-textarea"
                     rows={2}
@@ -627,15 +769,15 @@ $ _`}
               ))}
             </div>
           </div>
-          
+
           {/* Microphone Status Editor */}
           <div className="edit-card">
             <div className="edit-card-title">🎙️ Microphone Status</div>
             <div className="microphone-editor">
               <label className="toggle-label">
-                <input 
-                  type="checkbox" 
-                  checked={editableData.microphoneStatus.success} 
+                <input
+                  type="checkbox"
+                  checked={editableData.microphoneStatus.success}
                   onChange={toggleMicrophoneStatus}
                 />
                 <span>Microphone Interception {editableData.microphoneStatus.success ? 'ACTIVE ✓' : 'FAILED ✗'}</span>
@@ -643,8 +785,8 @@ $ _`}
               {!editableData.microphoneStatus.success && (
                 <div className="form-group">
                   <label>Error Message</label>
-                  <textarea 
-                    value={editableData.microphoneStatus.error} 
+                  <textarea
+                    value={editableData.microphoneStatus.error}
                     onChange={(e) => setEditableData(prev => ({
                       ...prev,
                       microphoneStatus: { ...prev.microphoneStatus, error: e.target.value }
@@ -656,11 +798,11 @@ $ _`}
               )}
             </div>
           </div>
-          
+
           <div className="generate-section-bottom">
-            <button 
-              className="btn btn-primary generate-btn-large" 
-              onClick={generateHTMLReportWithEditableData} 
+            <button
+              className="btn btn-primary generate-btn-large"
+              onClick={generateHTMLReportWithEditableData}
               disabled={isGenerating}
             >
               {isGenerating ? '⏳ Generating Report...' : '🌐 Generate Report with Custom Data'}
@@ -668,7 +810,7 @@ $ _`}
           </div>
         </div>
       )}
-      
+
       {selectedReport && (
         <div className="modal-overlay" onClick={() => setSelectedReport(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -680,7 +822,7 @@ $ _`}
               <div className="report-preview">
                 <div className="preview-header">
                   <h3>{selectedReport.name}</h3>
-                  <p>Generated: {selectedReport.generatedDate.toLocaleString()}</p>
+                  <p>Generated: {new Date(selectedReport.generatedDate).toLocaleString()}</p>
                   <p>By: {selectedReport.generatedBy}</p>
                   <p>Case: {selectedReport.case}</p>
                 </div>
