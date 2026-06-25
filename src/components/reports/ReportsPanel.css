@@ -655,3 +655,43 @@
     opacity: 1;
   }
 }
+.btn-save-all {
+  background: #0193c6;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.terminal-edit-btn {
+  background: transparent;
+  border: none;
+  color: #0f0;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: auto;
+}
+.terminal-textarea {
+  width: 100%;
+  background: #000;
+  color: #0f0;
+  font-family: monospace;
+  border: 1px solid #0f0;
+  padding: 8px;
+  border-radius: 4px;
+}
+.reports-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.btn-add-report {
+  background: #0193c6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
