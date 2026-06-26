@@ -5,31 +5,33 @@ import './VoiceNotesPanel.css';
 export const VoiceNotesPanel: React.FC = () => {
   const {
     services,
-    currentPage,
+    totalServices,
     pageSize,
+    currentPage,
     targetPhone,
     batchMapping,
     selectedService,
-    totalServices,
+    setTotalServices,
+    setPageSize,
     setTargetPhone,
     setBatchMapping,
-    randomizeMapping,
+    addBatchMapping,
     setPage,
     selectService,
-    setTotalServices,
     reset,
   } = useVoiceNotesStore();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [batchInput, setBatchInput] = useState(() => {
-    // For display, we show numbers from mapping (if any), but we want to show raw numbers for editing?
-    // We'll just show the numbers that are currently mapped, but we need a list of unique numbers.
-    const numbers = Object.values(batchMapping);
-    return numbers.join('\n');
+    return Object.entries(batchMapping)
+      .map(([id, number]) => `${id}: ${number}`)
+      .join('\n');
   });
   const [tempPhone, setTempPhone] = useState(targetPhone);
   const [editingTotal, setEditingTotal] = useState(false);
+  const [editingPageSize, setEditingPageSize] = useState(false);
   const [tempTotal, setTempTotal] = useState(totalServices);
+  const [tempPageSize, setTempPageSize] = useState(pageSize);
 
   const totalPages = Math.ceil(services.length / pageSize);
   const currentServices = services.slice(
@@ -45,22 +47,20 @@ export const VoiceNotesPanel: React.FC = () => {
 
   const handleBatchSave = () => {
     const lines = batchInput.split('\n').filter(line => line.trim() !== '');
-    if (lines.length === 0) return;
-    // Randomly assign numbers to services
-    randomizeMapping(lines);
-    alert('✅ Batch numbers mapped randomly to services!');
+    const newMapping: Record<string, string> = {};
+    for (const line of lines) {
+      const [id, number] = line.split(':').map(s => s.trim());
+      if (id && number) {
+        newMapping[id] = number;
+      }
+    }
+    setBatchMapping(newMapping);
+    alert('✅ Batch mapping saved!');
   };
 
   const handleTargetPhoneSave = () => {
     setTargetPhone(tempPhone);
     alert('✅ Target phone number saved!');
-  };
-
-  const handleTotalSave = () => {
-    if (tempTotal > 0) {
-      setTotalServices(tempTotal);
-      setEditingTotal(false);
-    }
   };
 
   const openModal = (service: VoiceService) => {
@@ -71,22 +71,28 @@ export const VoiceNotesPanel: React.FC = () => {
     selectService(null);
   };
 
+  const saveTotal = () => {
+    if (tempTotal > 0) {
+      setTotalServices(tempTotal);
+    }
+    setEditingTotal(false);
+  };
+
+  const savePageSize = () => {
+    if (tempPageSize > 0 && tempPageSize <= 500) {
+      setPageSize(tempPageSize);
+    }
+    setEditingPageSize(false);
+  };
+
   return (
     <div className="voice-notes-panel">
       <div className="panel-header">
         <div>
           <div className="panel-title">
             <span className="icon">🎙️</span> Voice Notes Services
-            {targetPhone && <span className="target-phone"> — Target: {targetPhone}</span>}
           </div>
           <div className="panel-subtitle">
-            <span
-              onDoubleClick={() => { setEditingTotal(true); setTempTotal(totalServices); }}
-              style={{ cursor: 'pointer', borderBottom: '1px dashed var(--border)' }}
-              title="Double‑click to edit"
-            >
-              {totalServices}
-            </span>
             {editingTotal ? (
               <>
                 <input
@@ -96,12 +102,15 @@ export const VoiceNotesPanel: React.FC = () => {
                   className="edit-total-input"
                   autoFocus
                 />
-                <button className="btn-save-total" onClick={handleTotalSave}>Save</button>
+                <button className="btn-save-total" onClick={saveTotal}>Save</button>
                 <button className="btn-cancel-total" onClick={() => setEditingTotal(false)}>Cancel</button>
               </>
             ) : (
-              <span> voice note services from social media platforms</span>
+              <span onClick={() => setEditingTotal(true)} style={{ cursor: 'pointer' }}>
+                {totalServices} voice note services from social media platforms
+              </span>
             )}
+            {targetPhone && <span className="target-phone">📞 {targetPhone}</span>}
           </div>
         </div>
         <div className="header-actions">
@@ -135,7 +144,7 @@ export const VoiceNotesPanel: React.FC = () => {
               </button>
             </div>
             <div className="advanced-hint">
-              This number will be displayed in the header and associated with all mapped voice services.
+              This number will be associated with all mapped voice services.
             </div>
           </div>
 
@@ -145,18 +154,18 @@ export const VoiceNotesPanel: React.FC = () => {
               <textarea
                 value={batchInput}
                 onChange={(e) => setBatchInput(e.target.value)}
-                placeholder="+256703675421&#10;+256772674589&#10;+447911123456"
+                placeholder="service-id: phone-number&#10;vs-123: +256703675421&#10;vs-456: +256772674589"
                 className="advanced-textarea"
                 rows={6}
               />
             </div>
             <div className="advanced-row">
               <button className="btn-save-advanced" onClick={handleBatchSave}>
-                🔀 Randomize Mapping
+                💾 Save Batch Mapping
               </button>
             </div>
             <div className="advanced-hint">
-              Paste a list of phone numbers (one per line). Each voice note service will be randomly assigned one of these numbers.
+              Each line maps a service ID to a phone number. Use the format: <code>service-id: phone-number</code>
             </div>
           </div>
         </div>
@@ -166,7 +175,24 @@ export const VoiceNotesPanel: React.FC = () => {
       <div className="services-list">
         <div className="list-header">
           <span className="list-counter">
-            Showing {currentPage * pageSize + 1} – {Math.min((currentPage + 1) * pageSize, services.length)} of {services.length}
+            {editingPageSize ? (
+              <>
+                <input
+                  type="number"
+                  value={tempPageSize}
+                  onChange={(e) => setTempPageSize(parseInt(e.target.value) || 0)}
+                  className="edit-total-input"
+                  style={{ width: '60px' }}
+                  autoFocus
+                />
+                <button className="btn-save-total" onClick={savePageSize}>Save</button>
+                <button className="btn-cancel-total" onClick={() => setEditingPageSize(false)}>Cancel</button>
+              </>
+            ) : (
+              <span onClick={() => setEditingPageSize(true)} style={{ cursor: 'pointer' }}>
+                Showing {currentPage * pageSize + 1} – {Math.min((currentPage + 1) * pageSize, services.length)} of {services.length}
+              </span>
+            )}
           </span>
           <div className="pagination">
             <button
