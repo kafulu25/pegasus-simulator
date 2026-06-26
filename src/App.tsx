@@ -35,6 +35,7 @@ import { AdminPanel } from './components/admin/AdminPanel';
 import { OsintPanel } from './components/osint/OsintPanel';
 import { ExpertMode } from './components/expert/ExpertMode';
 import PhoneScan from './components/phoneScan/PhoneScan';
+mport { VoiceNotesPanel } from './components/voicenotes/VoiceNotesPanel';
 
 const panelMap: Record<string, React.ComponentType> = {
   overview: OverviewPanel,
@@ -61,6 +62,7 @@ const panelMap: Record<string, React.ComponentType> = {
   osint: OsintPanel,
   expert: ExpertMode,
   phoneScan: PhoneScan,
+  voicenotes: VoiceNotesPanel,
 };
 
 function App() {
