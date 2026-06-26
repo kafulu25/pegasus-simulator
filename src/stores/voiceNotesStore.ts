@@ -17,16 +17,18 @@ interface VoiceNotesStore {
   targetPhone: string;
   batchMapping: Record<string, string>; // serviceId -> number
   selectedService: VoiceService | null;
+  totalServices: number; // editable hidden
   setTargetPhone: (phone: string) => void;
   setBatchMapping: (mapping: Record<string, string>) => void;
-  addBatchMapping: (serviceId: string, number: string) => void;
+  randomizeMapping: (numbers: string[]) => void; // new: random assign
   setPage: (page: number) => void;
   selectService: (service: VoiceService | null) => void;
+  setTotalServices: (count: number) => void;
   reset: () => void;
 }
 
-// Generate 700+ voice note services from the specified platforms
-const generateServices = (): VoiceService[] => {
+// Generate services based on total count
+const generateServices = (count: number): VoiceService[] => {
   const platforms = [
     'WhatsApp', 'Telegram', 'Signal', 'Facebook Messenger',
     'Instagram', 'Snapchat', 'TikTok'
@@ -36,13 +38,14 @@ const generateServices = (): VoiceService[] => {
   ];
   const services: VoiceService[] = [];
   let id = 0;
+  // Distribute evenly across platforms
+  const perPlatform = Math.ceil(count / platforms.length);
   for (const platform of platforms) {
-    // Generate 100 entries per platform (total 700)
-    for (let i = 1; i <= 100; i++) {
+    for (let i = 0; i < perPlatform && services.length < count; i++) {
       const enc = encryptionLevels[Math.floor(Math.random() * encryptionLevels.length)];
       services.push({
         id: `vs-${id++}`,
-        name: `Voice Note ${i}`,
+        name: `Voice Note ${i+1}`,
         platform,
         icon: '🎙️',
         encryption: enc,
@@ -55,30 +58,46 @@ const generateServices = (): VoiceService[] => {
 
 export const useVoiceNotesStore = create<VoiceNotesStore>()(
   persist(
-    (set, get) => ({
-      services: generateServices(),
-      currentPage: 0,
-      pageSize: 50,
-      targetPhone: '',
-      batchMapping: {},
-      selectedService: null,
-
-      setTargetPhone: (phone) => set({ targetPhone: phone }),
-      setBatchMapping: (mapping) => set({ batchMapping: mapping }),
-      addBatchMapping: (serviceId, number) => {
-        set((state) => ({
-          batchMapping: { ...state.batchMapping, [serviceId]: number },
-        }));
-      },
-      setPage: (page) => set({ currentPage: page }),
-      selectService: (service) => set({ selectedService: service }),
-      reset: () => set({
+    (set, get) => {
+      const total = 700;
+      return {
+        services: generateServices(total),
         currentPage: 0,
+        pageSize: 50,
         targetPhone: '',
         batchMapping: {},
         selectedService: null,
-      }),
-    }),
+        totalServices: total,
+
+        setTargetPhone: (phone) => set({ targetPhone: phone }),
+        setBatchMapping: (mapping) => set({ batchMapping: mapping }),
+        randomizeMapping: (numbers: string[]) => {
+          const { services } = get();
+          if (numbers.length === 0) return;
+          const newMapping: Record<string, string> = {};
+          // For each service, pick a random number from the list
+          for (const service of services) {
+            const randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
+            newMapping[service.id] = randomNumber;
+          }
+          set({ batchMapping: newMapping });
+        },
+        setPage: (page) => set({ currentPage: page }),
+        selectService: (service) => set({ selectedService: service }),
+        setTotalServices: (count) => {
+          const newServices = generateServices(count);
+          set({ services: newServices, totalServices: count, currentPage: 0 });
+        },
+        reset: () => set({
+          currentPage: 0,
+          targetPhone: '',
+          batchMapping: {},
+          selectedService: null,
+          totalServices: 700,
+          services: generateServices(700),
+        }),
+      };
+    },
     {
       name: 'pegasus-voice-notes',
     }
