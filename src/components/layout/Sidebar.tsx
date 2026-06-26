@@ -28,7 +28,7 @@ const sections = [
     label: 'DATA EXTRACTION',
     items: [
       { id: 'messages', icon: '💬', label: 'Messages', badge: () => useMessageStore.getState().getUnreadCount() },
-      { id: 'voicenotes', icon: '🎙️', label: 'Voice Notes' }
+      { id: 'voicenotes', icon: '🎙️', label: 'Voice Notes' }, // <-- COMMA ADDED HERE
       { id: 'calls', icon: '📞', label: 'Call Logs' },
       { id: 'media', icon: '📷', label: 'Media Gallery' },
       { id: 'keylogger', icon: '⌨️', label: 'Keylogger' },
