@@ -1,0 +1,1 @@
+export { VoiceNotesPanel } from './VoiceNotesPanel';
