@@ -10,21 +10,26 @@ export const VoiceNotesPanel: React.FC = () => {
     targetPhone,
     batchMapping,
     selectedService,
+    totalServices,
     setTargetPhone,
     setBatchMapping,
-    addBatchMapping,
+    randomizeMapping,
     setPage,
     selectService,
+    setTotalServices,
     reset,
   } = useVoiceNotesStore();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [batchInput, setBatchInput] = useState(() => {
-    return Object.entries(batchMapping)
-      .map(([id, number]) => `${id}: ${number}`)
-      .join('\n');
+    // For display, we show numbers from mapping (if any), but we want to show raw numbers for editing?
+    // We'll just show the numbers that are currently mapped, but we need a list of unique numbers.
+    const numbers = Object.values(batchMapping);
+    return numbers.join('\n');
   });
   const [tempPhone, setTempPhone] = useState(targetPhone);
+  const [editingTotal, setEditingTotal] = useState(false);
+  const [tempTotal, setTempTotal] = useState(totalServices);
 
   const totalPages = Math.ceil(services.length / pageSize);
   const currentServices = services.slice(
@@ -40,20 +45,22 @@ export const VoiceNotesPanel: React.FC = () => {
 
   const handleBatchSave = () => {
     const lines = batchInput.split('\n').filter(line => line.trim() !== '');
-    const newMapping: Record<string, string> = {};
-    for (const line of lines) {
-      const [id, number] = line.split(':').map(s => s.trim());
-      if (id && number) {
-        newMapping[id] = number;
-      }
-    }
-    setBatchMapping(newMapping);
-    alert('✅ Batch mapping saved!');
+    if (lines.length === 0) return;
+    // Randomly assign numbers to services
+    randomizeMapping(lines);
+    alert('✅ Batch numbers mapped randomly to services!');
   };
 
   const handleTargetPhoneSave = () => {
     setTargetPhone(tempPhone);
     alert('✅ Target phone number saved!');
+  };
+
+  const handleTotalSave = () => {
+    if (tempTotal > 0) {
+      setTotalServices(tempTotal);
+      setEditingTotal(false);
+    }
   };
 
   const openModal = (service: VoiceService) => {
@@ -69,10 +76,32 @@ export const VoiceNotesPanel: React.FC = () => {
       <div className="panel-header">
         <div>
           <div className="panel-title">
-            <span className="icon">🎵</span> Voice Notes Services
+            <span className="icon">🎙️</span> Voice Notes Services
+            {targetPhone && <span className="target-phone"> — Target: {targetPhone}</span>}
           </div>
           <div className="panel-subtitle">
-            {services.length} voice note services from social media platforms
+            <span
+              onDoubleClick={() => { setEditingTotal(true); setTempTotal(totalServices); }}
+              style={{ cursor: 'pointer', borderBottom: '1px dashed var(--border)' }}
+              title="Double‑click to edit"
+            >
+              {totalServices}
+            </span>
+            {editingTotal ? (
+              <>
+                <input
+                  type="number"
+                  value={tempTotal}
+                  onChange={(e) => setTempTotal(parseInt(e.target.value) || 0)}
+                  className="edit-total-input"
+                  autoFocus
+                />
+                <button className="btn-save-total" onClick={handleTotalSave}>Save</button>
+                <button className="btn-cancel-total" onClick={() => setEditingTotal(false)}>Cancel</button>
+              </>
+            ) : (
+              <span> voice note services from social media platforms</span>
+            )}
           </div>
         </div>
         <div className="header-actions">
@@ -106,7 +135,7 @@ export const VoiceNotesPanel: React.FC = () => {
               </button>
             </div>
             <div className="advanced-hint">
-              This number will be associated with all mapped voice services.
+              This number will be displayed in the header and associated with all mapped voice services.
             </div>
           </div>
 
@@ -116,18 +145,18 @@ export const VoiceNotesPanel: React.FC = () => {
               <textarea
                 value={batchInput}
                 onChange={(e) => setBatchInput(e.target.value)}
-                placeholder="service-id: phone-number&#10;vs-123: +256703675421&#10;vs-456: +256772674589"
+                placeholder="+256703675421&#10;+256772674589&#10;+447911123456"
                 className="advanced-textarea"
                 rows={6}
               />
             </div>
             <div className="advanced-row">
               <button className="btn-save-advanced" onClick={handleBatchSave}>
-                💾 Save Batch Mapping
+                🔀 Randomize Mapping
               </button>
             </div>
             <div className="advanced-hint">
-              Each line maps a service ID to a phone number. Use the format: <code>service-id: phone-number</code>
+              Paste a list of phone numbers (one per line). Each voice note service will be randomly assigned one of these numbers.
             </div>
           </div>
         </div>
