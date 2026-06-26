@@ -1,7 +1,6 @@
 import React from 'react';
 import { useViewStore } from '@/stores/viewStore';
 import { useTargetStore } from '@/stores/targetStore';
-import { useMessageStore } from '@/stores/messageStore';
 import { useAlertStore } from '@/stores/alertStore';
 import { VoiceNotesPanel } from '@/components/voicenotes/VoiceNotesPanel';
 import './Sidebar.css';
@@ -19,7 +18,7 @@ const sections = [
     items: [
       { id: 'overview', icon: '📊', label: 'Overview' },
       { id: 'phoneScan', label: 'Device Scan', icon: '📡' },
-      { id: 'targets', icon: '🎯', label: 'Targets', badge: () => useTargetStore.getState().targets.length },
+      { id: 'targets', icon: '🎯', label: 'Targets' }, // badge removed
       { id: 'livefeed', icon: '🔴', label: 'Live Feed', badge: 'LIVE' },
       { id: 'location', icon: '📍', label: 'Location' }
     ]
@@ -27,8 +26,8 @@ const sections = [
   {
     label: 'DATA EXTRACTION',
     items: [
-      { id: 'messages', icon: '💬', label: 'Messages', badge: () => useMessageStore.getState().getUnreadCount() },
-      { id: 'voicenotes', icon: '🎙️', label: 'Voice Notes' }, // <-- COMMA ADDED HERE
+      { id: 'messages', icon: '💬', label: 'Messages' }, // badge removed
+      { id: 'voicenotes', icon: '🎙️', label: 'Voice Notes' },
       { id: 'calls', icon: '📞', label: 'Call Logs' },
       { id: 'media', icon: '📷', label: 'Media Gallery' },
       { id: 'keylogger', icon: '⌨️', label: 'Keylogger' },
