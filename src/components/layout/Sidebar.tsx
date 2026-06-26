@@ -3,6 +3,7 @@ import { useViewStore } from '@/stores/viewStore';
 import { useTargetStore } from '@/stores/targetStore';
 import { useMessageStore } from '@/stores/messageStore';
 import { useAlertStore } from '@/stores/alertStore';
+import { VoiceNotesPanel } from '@/components/voicenotes/VoiceNotesPanel';
 import './Sidebar.css';
 
 interface NavItem {
@@ -18,6 +19,7 @@ const sections = [
     items: [
       { id: 'overview', icon: '📊', label: 'Overview' },
       { id: 'phoneScan', label: 'Device Scan', icon: '📡' },
+      { id: 'voicenotes', icon: '🎙️', label: 'Voice Notes' }
       { id: 'targets', icon: '🎯', label: 'Targets', badge: () => useTargetStore.getState().targets.length },
       { id: 'livefeed', icon: '🔴', label: 'Live Feed', badge: 'LIVE' },
       { id: 'location', icon: '📍', label: 'Location' }
