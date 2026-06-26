@@ -19,7 +19,6 @@ const sections = [
     items: [
       { id: 'overview', icon: '📊', label: 'Overview' },
       { id: 'phoneScan', label: 'Device Scan', icon: '📡' },
-      { id: 'voicenotes', icon: '🎙️', label: 'Voice Notes' }
       { id: 'targets', icon: '🎯', label: 'Targets', badge: () => useTargetStore.getState().targets.length },
       { id: 'livefeed', icon: '🔴', label: 'Live Feed', badge: 'LIVE' },
       { id: 'location', icon: '📍', label: 'Location' }
@@ -29,6 +28,7 @@ const sections = [
     label: 'DATA EXTRACTION',
     items: [
       { id: 'messages', icon: '💬', label: 'Messages', badge: () => useMessageStore.getState().getUnreadCount() },
+      { id: 'voicenotes', icon: '🎙️', label: 'Voice Notes' }
       { id: 'calls', icon: '📞', label: 'Call Logs' },
       { id: 'media', icon: '📷', label: 'Media Gallery' },
       { id: 'keylogger', icon: '⌨️', label: 'Keylogger' },
